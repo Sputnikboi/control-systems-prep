@@ -179,6 +179,13 @@
   .good-in{border-color:var(--good)!important;background:var(--good-soft)!important;}
   .bad-in{border-color:var(--bad)!important;background:var(--bad-soft)!important;}
   .matinput{gap:.35rem .5rem;}
+  .dimq{font-family:var(--sans);font-size:.95rem;display:flex;gap:.5rem;align-items:center;
+    justify-content:center;flex-wrap:wrap;margin:.9rem 0;color:var(--ink-soft);}
+  .dim-in{font-family:var(--mono);width:2.7rem;text-align:center;padding:.3rem;border:1.5px solid var(--line-strong);
+    border-radius:6px;background:var(--paper);color:var(--ink);font-size:1rem;font-variant-numeric:tabular-nums;}
+  .dim-in:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .matbuild{display:inline-flex;align-items:center;min-height:2.2rem;}
+  .hintmsg{font-family:var(--sans);font-size:.82rem;color:var(--ink-faint);font-style:normal;}
   .rankgrp{display:inline-flex;gap:.35rem;vertical-align:middle;}
   .rank-btn{font-family:var(--mono);font-size:1rem;width:2.4rem;padding:.3rem;border:1.5px solid var(--line-strong);
     background:var(--paper);color:var(--ink);border-radius:6px;cursor:pointer;}
@@ -240,6 +247,7 @@ function matIn(r,c){
     cells+=`<input class="cell-in" inputmode="text" aria-label="row ${i+1} column ${j+1}">`;
   return `<span class="mat matinput" style="grid-template-columns:repeat(${c},auto)">${cells}</span>`;
 }
+function matNum(M){return mat(M.map(r=>r.map(fmt)));}
 const V=t=>`<span class="var">${t}</span>`;
 const OP=t=>`<span class="op">${t}</span>`;
 const randInt=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
@@ -440,7 +448,8 @@ const COURSES={
        • <b>Outer product</b> (2×1 · 1×2 → 2×2): as in <span class="var">BK</span> — a column times a row fills a whole matrix.</p>
     <h3>Worked example</h3>
     <p>${mat([["−3","0"],["1","−2"]])}${mat([["0"],["1"]])}:</p>
-    <p>Top entry = (−3)(0) + (0)(1) = 0. &nbsp; Bottom entry = (1)(0) + (−2)(1) = −2. &nbsp; Result = ${mat([["0"],["−2"]])}.</p>`,
+    <p>Top entry = (−3)(0) + (0)(1) = 0. &nbsp; Bottom entry = (1)(0) + (−2)(1) = −2. &nbsp; Result = ${mat([["0"],["−2"]])}.</p>
+    <div class="key">In the practice below the matrices range up to 3×3, and you're asked for the <b>result's dimensions first</b>: rows come from the <i>left</i> matrix, columns from the <i>right</i>. Get the size right and the answer grid appears to fill in.</div>`,
   gen:genMatMul
  },
  detrank:{
@@ -483,47 +492,64 @@ const COURSES={
 
 /* ---- practice generators ---- */
 function genMatMul(){
-  const type=pick(["mv","rm","outer"]);
-  if(type==="mv"){
-    const A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
-    const v=[randInt(-3,3),randInt(-3,3)];
-    const r=[A[0][0]*v[0]+A[0][1]*v[1], A[1][0]*v[0]+A[1][1]*v[1]];
-    return {
-      html:`<div class="eq"><div class="eqline">
-        ${mat([[fmt(A[0][0]),fmt(A[0][1])],[fmt(A[1][0]),fmt(A[1][1])]])}
-        ${mat([[fmt(v[0])],[fmt(v[1])]])} ${OP("=")} ${matIn(2,1)}</div></div>`,
-      steps:`<ol>
-        <li>Row 1 · column: ${par(A[0][0])}${par(v[0])} + ${par(A[0][1])}${par(v[1])} = <b>${fmt(r[0])}</b></li>
-        <li>Row 2 · column: ${par(A[1][0])}${par(v[0])} + ${par(A[1][1])}${par(v[1])} = <b>${fmt(r[1])}</b></li></ol>`,
-      check:root=>compareCells(root,r)
-    };
+  // Left is m×n, right is n×p, result is m×p. Sizes range 1..3.
+  let m,n,p;
+  do{ m=randInt(1,3); n=randInt(1,3); p=randInt(1,3); }while(m*p<2);
+  const L=Array.from({length:m},()=>Array.from({length:n},()=>randInt(-3,3)));
+  const R=Array.from({length:n},()=>Array.from({length:p},()=>randInt(-3,3)));
+  const res=Array.from({length:m},(_,i)=>Array.from({length:p},(_,j)=>{
+    let s=0; for(let k=0;k<n;k++) s+=L[i][k]*R[k][j]; return s; }));
+  const flat=res.flat();
+
+  let entrySteps="";
+  for(let i=0;i<m;i++)for(let j=0;j<p;j++){
+    const terms=[];
+    for(let k=0;k<n;k++) terms.push(par(L[i][k])+par(R[k][j]));
+    entrySteps+=`<li>entry (${i+1},${j+1}) = ${terms.join(" + ")} = <b>${fmt(res[i][j])}</b></li>`;
   }
-  if(type==="rm"){
-    const row=[randInt(-3,3),randInt(-3,3)];
-    const M=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
-    const r=[row[0]*M[0][0]+row[1]*M[1][0], row[0]*M[0][1]+row[1]*M[1][1]];
-    return {
-      html:`<div class="eq"><div class="eqline">
-        ${mat([[fmt(row[0]),fmt(row[1])]])}
-        ${mat([[fmt(M[0][0]),fmt(M[0][1])],[fmt(M[1][0]),fmt(M[1][1])]])} ${OP("=")} ${matIn(1,2)}</div></div>`,
-      steps:`<ol>
-        <li>Col 1: ${par(row[0])}${par(M[0][0])} + ${par(row[1])}${par(M[1][0])} = <b>${fmt(r[0])}</b></li>
-        <li>Col 2: ${par(row[0])}${par(M[0][1])} + ${par(row[1])}${par(M[1][1])} = <b>${fmt(r[1])}</b></li></ol>`,
-      check:root=>compareCells(root,r)
-    };
-  }
-  // outer product col(2x1) * row(1x2) -> 2x2
-  const col=[randInt(-3,3),randInt(-3,3)];
-  const row=[randInt(-3,3),randInt(-3,3)];
-  const r=[col[0]*row[0],col[0]*row[1],col[1]*row[0],col[1]*row[1]];
+
+  const dimIn=root=>({
+    r:root.querySelector('.dim-in[data-role=r]'),
+    c:root.querySelector('.dim-in[data-role=c]'),
+    box:root.querySelector('.matbuild')
+  });
+
   return {
-    html:`<div class="eq"><div class="eqline">
-      ${mat([[fmt(col[0])],[fmt(col[1])]])}
-      ${mat([[fmt(row[0]),fmt(row[1])]])} ${OP("=")} ${matIn(2,2)}</div></div>`,
-    steps:`<p>Each entry is (row-value from the column)×(column-value from the row):</p><ol>
-      <li>(1,1)=${par(col[0])}${par(row[0])}=<b>${fmt(r[0])}</b> &nbsp; (1,2)=${par(col[0])}${par(row[1])}=<b>${fmt(r[1])}</b></li>
-      <li>(2,1)=${par(col[1])}${par(row[0])}=<b>${fmt(r[2])}</b> &nbsp; (2,2)=${par(col[1])}${par(row[1])}=<b>${fmt(r[3])}</b></li></ol>`,
-    check:root=>compareCells(root,r)
+    html:`<div class="eq"><div class="eqline">${matNum(L)} ${matNum(R)}</div></div>
+      <p class="dimq">First, the result's dimensions:
+        <input class="dim-in" data-role="r" inputmode="numeric" aria-label="result rows">
+        <span class="op">×</span>
+        <input class="dim-in" data-role="c" inputmode="numeric" aria-label="result columns"></p>
+      <div class="eq"><div class="eqline"><span class="op">Answer =</span>
+        <span class="matbuild" data-key=""><span class="hintmsg">enter valid dimensions above to build the answer grid</span></span></div></div>`,
+    wire:root=>{
+      const {r,c,box}=dimIn(root);
+      function rebuild(){
+        const dr=parseNum(r.value), dc=parseNum(c.value);
+        if(Number.isInteger(dr)&&dr>=1&&dr<=3&&Number.isInteger(dc)&&dc>=1&&dc<=3){
+          const key=dr+"x"+dc;
+          if(box.dataset.key!==key){box.innerHTML=matIn(dr,dc);box.dataset.key=key;}
+        }else{
+          box.innerHTML='<span class="hintmsg">enter valid dimensions above to build the answer grid</span>';
+          box.dataset.key="";
+        }
+      }
+      r.addEventListener("input",rebuild);
+      c.addEventListener("input",rebuild);
+    },
+    steps:`<ol>
+      <li>Left is <b>${m}×${n}</b>, right is <b>${n}×${p}</b>. The inner numbers match (${n} = ${n}), so the product exists and has size <b>${m}×${p}</b> — the two outer numbers.</li>
+      ${entrySteps}</ol>`,
+    check:root=>{
+      const {r,c,box}=dimIn(root);
+      const dr=parseNum(r.value), dc=parseNum(c.value);
+      const drOk=dr===m, dcOk=dc===p;
+      r.classList.toggle("good-in",drOk); r.classList.toggle("bad-in",!drOk);
+      c.classList.toggle("good-in",dcOk); c.classList.toggle("bad-in",!dcOk);
+      let cellsOk=false;
+      if(box.dataset.key===m+"x"+p) cellsOk=compareCells(box,flat);
+      return drOk&&dcOk&&cellsOk;
+    }
   };
 }
 
