@@ -1,0 +1,691 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Interactive practice for the Control Systems Lecture 10 test: hints, worked solutions, and math crash courses.">
+<meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e151f" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Control Prep">
+<title>Control Systems · Lecture 10 Test</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%F0%9F%8E%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --paper:#f5f7fa;--panel:#ffffff;--ink:#16202e;--ink-soft:#41556b;--ink-faint:#7688a0;
+    --line:#dbe3ec;--line-strong:#c3cfdd;
+    --accent:#0c8f8f;--accent-soft:#e2f2f1;--accent-ink:#075e5e;
+    --mark:#c07c12;--mark-soft:#fbf1dc;--mark-ink:#8a5602;
+    --good:#2f7d4f;--good-soft:#e5f2ea;--bad:#c23b52;--bad-soft:#f9e6ea;
+    --shadow:0 1px 2px rgba(22,32,46,.05),0 8px 24px rgba(22,32,46,.06);
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono","Cascadia Code",Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme:dark){
+    :root{
+      --paper:#0e151f;--panel:#161f2b;--ink:#e7edf4;--ink-soft:#a9b8c9;--ink-faint:#6f8298;
+      --line:#26313f;--line-strong:#33404f;--accent:#3fd0c9;--accent-soft:#15302f;--accent-ink:#7ee3dd;
+      --mark:#e6ad4b;--mark-soft:#2e2413;--mark-ink:#f0c574;
+      --good:#5fc487;--good-soft:#16281d;--bad:#e06b80;--bad-soft:#2c1519;
+      --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="light"]{
+    --paper:#f5f7fa;--panel:#ffffff;--ink:#16202e;--ink-soft:#41556b;--ink-faint:#7688a0;
+    --line:#dbe3ec;--line-strong:#c3cfdd;--accent:#0c8f8f;--accent-soft:#e2f2f1;--accent-ink:#075e5e;
+    --mark:#c07c12;--mark-soft:#fbf1dc;--mark-ink:#8a5602;--good:#2f7d4f;--good-soft:#e5f2ea;
+    --bad:#c23b52;--bad-soft:#f9e6ea;--shadow:0 1px 2px rgba(22,32,46,.05),0 8px 24px rgba(22,32,46,.06);
+  }
+  :root[data-theme="dark"]{
+    --paper:#0e151f;--panel:#161f2b;--ink:#e7edf4;--ink-soft:#a9b8c9;--ink-faint:#6f8298;
+    --line:#26313f;--line-strong:#33404f;--accent:#3fd0c9;--accent-soft:#15302f;--accent-ink:#7ee3dd;
+    --mark:#e6ad4b;--mark-soft:#2e2413;--mark-ink:#f0c574;--good:#5fc487;--good-soft:#16281d;
+    --bad:#e06b80;--bad-soft:#2c1519;--shadow:0 1px 2px rgba(0,0,0,.3),0 10px 30px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);
+    line-height:1.6;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:820px;margin:0 auto;padding:clamp(1.2rem,4vw,3rem) clamp(1rem,4vw,2rem) 5rem;}
+
+  header{margin-bottom:1.4rem;}
+  .eyebrow{font-family:var(--sans);font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent-ink);font-weight:600;margin:0 0 .5rem;}
+  h1{font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.15;margin:0 0 .4rem;text-wrap:balance;font-weight:600;}
+  .sub{color:var(--ink-soft);margin:0;font-size:1.02rem;}
+  .toprow{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap;}
+  .themebtn{font-family:var(--sans);font-size:.78rem;border:1px solid var(--line-strong);
+    background:var(--panel);color:var(--ink-soft);border-radius:999px;padding:.4rem .8rem;cursor:pointer;white-space:nowrap;}
+  .themebtn:hover{border-color:var(--accent);color:var(--accent-ink);}
+
+  /* top nav tabs */
+  .nav{display:flex;gap:.4rem;margin:1.4rem 0 0;border-bottom:1px solid var(--line);}
+  .nav button{font-family:var(--sans);font-size:.92rem;font-weight:600;background:none;border:0;
+    color:var(--ink-faint);padding:.6rem .3rem;margin-right:1rem;cursor:pointer;border-bottom:2px solid transparent;
+    margin-bottom:-1px;transition:.15s;}
+  .nav button:hover{color:var(--ink);}
+  .nav button.on{color:var(--accent-ink);border-bottom-color:var(--accent);}
+
+  .progress{margin:1.4rem 0 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:.85rem 1rem;display:flex;align-items:center;gap:.9rem;box-shadow:var(--shadow);}
+  .track{flex:1;height:7px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .fill{height:100%;width:0;background:var(--good);border-radius:99px;transition:width .35s ease;}
+  .ptext{font-family:var(--sans);font-size:.82rem;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums;}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(1.1rem,3vw,1.8rem);margin-top:1.5rem;box-shadow:var(--shadow);transition:border-color .25s;}
+  .card.done{border-color:var(--good);}
+  .qhead{display:flex;gap:.85rem;align-items:center;margin-bottom:.4rem;}
+  .qnum{font-family:var(--sans);font-weight:700;font-size:.8rem;color:var(--panel);background:var(--accent);
+    min-width:1.7rem;height:1.7rem;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;flex:none;}
+  .card.done .qnum{background:var(--good);}
+  .qtitle{font-size:1.16rem;font-weight:600;margin:0;line-height:1.35;}
+  .topic{font-family:var(--sans);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;}
+  .prompt{margin:.6rem 0 1rem;}
+  .prompt p{margin:.5rem 0;}
+
+  .eq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.5rem;
+    margin:1rem 0;padding:.9rem;background:var(--paper);border-radius:10px;overflow-x:auto;}
+  .eqline{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.45rem;width:100%;}
+  .var{font-style:italic;}
+  .op{color:var(--ink-soft);padding:0 .1rem;}
+
+  .mat{position:relative;display:inline-grid;gap:.2rem .9rem;padding:.35rem .55rem;
+    font-variant-numeric:tabular-nums;line-height:1.1;}
+  .mat > span{text-align:center;font-style:italic;}
+  .mat::before,.mat::after{content:"";position:absolute;top:0;bottom:0;width:.42rem;border:1.7px solid var(--ink);}
+  .mat::before{left:0;border-right:0;}
+  .mat::after{right:0;border-left:0;}
+  .mat.plain > span{font-style:normal;}
+
+  /* brush-up links */
+  .brush{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:0 0 1rem;
+    font-family:var(--sans);font-size:.82rem;color:var(--ink-faint);}
+  .brush .lbl{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;}
+  .brush a{background:var(--accent-soft);color:var(--accent-ink);border:1px solid transparent;
+    padding:.25rem .6rem;border-radius:99px;cursor:pointer;text-decoration:none;font-weight:600;transition:.15s;}
+  .brush a:hover{border-color:var(--accent);}
+
+  .actions{display:flex;flex-wrap:wrap;gap:.55rem;margin-top:.3rem;}
+  button.act{font-family:var(--sans);font-size:.85rem;font-weight:600;cursor:pointer;border-radius:9px;
+    padding:.5rem .9rem;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);
+    transition:.18s;display:inline-flex;align-items:center;gap:.4rem;}
+  button.act:hover{border-color:var(--accent);color:var(--accent-ink);}
+  button.act:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  button.act.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+  button.act.primary:hover{filter:brightness(1.06);color:#fff;}
+  button.act:disabled{opacity:.4;cursor:default;}
+  button.act.gotit{margin-left:auto;}
+  button.act.gotit.on{background:var(--good);border-color:var(--good);color:#fff;}
+
+  .hints{margin-top:1rem;display:flex;flex-direction:column;gap:.6rem;}
+  .hint{border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 9px 9px 0;
+    padding:.7rem .9rem;font-size:.98rem;animation:slide .3s ease;}
+  .hint .htag{font-family:var(--sans);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-ink);font-weight:700;display:block;margin-bottom:.2rem;}
+  @keyframes slide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){.hint,.solution{animation:none}.fill{transition:none}}
+
+  .solution{margin-top:1rem;border:1px dashed var(--mark);background:var(--mark-soft);border-radius:11px;
+    padding:1rem 1.1rem;animation:slide .3s ease;}
+  .solution .stag{font-family:var(--sans);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--mark-ink);font-weight:700;margin-bottom:.5rem;display:block;}
+  .solution ol{margin:.3rem 0;padding-left:1.2rem;}
+  .solution li{margin:.55rem 0;}
+  .answer{margin-top:.9rem;padding:.7rem .9rem;background:var(--panel);border-radius:9px;border:1px solid var(--line);font-size:1.02rem;}
+  mark{background:var(--mark-soft);color:var(--mark-ink);padding:0 .18em;border-radius:3px;font-weight:600;}
+  .rule{color:var(--ink-soft);font-size:.94rem;}
+
+  /* ---- crash courses ---- */
+  .intro{color:var(--ink-soft);margin:1.4rem 0 0;font-size:1.02rem;}
+  .pills{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.2rem 0 0;}
+  .pill{font-family:var(--sans);font-size:.86rem;font-weight:600;border:1px solid var(--line-strong);
+    background:var(--panel);color:var(--ink-soft);border-radius:99px;padding:.45rem .9rem;cursor:pointer;transition:.15s;}
+  .pill:hover{border-color:var(--accent);color:var(--accent-ink);}
+  .pill.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+  .cshead{margin:1.6rem 0 .3rem;}
+  .cshead h2{font-size:1.5rem;margin:.2rem 0 .3rem;font-weight:600;}
+  .concept{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(1.1rem,3vw,1.7rem);margin-top:1.2rem;box-shadow:var(--shadow);}
+  .concept h3{font-family:var(--sans);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--accent-ink);margin:0 0 .6rem;}
+  .concept h3:not(:first-child){margin-top:1.4rem;}
+  .concept p{margin:.55rem 0;}
+  .key{background:var(--accent-soft);border-radius:9px;padding:.7rem .9rem;margin:.7rem 0;font-size:1.03rem;}
+
+  .practice{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(1.1rem,3vw,1.7rem);margin-top:1.2rem;box-shadow:var(--shadow);}
+  .pracHead{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap;}
+  .pracHead .stag{font-family:var(--sans);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--mark-ink);font-weight:700;}
+  .prob{margin:1rem 0;font-size:1.05rem;}
+  .prob .eq{background:var(--paper);}
+  .pracActions{display:flex;gap:.55rem;flex-wrap:wrap;}
+  .fb{font-family:var(--sans);font-size:.92rem;font-weight:600;margin-top:.9rem;min-height:1.2em;}
+  .fb.ok{color:var(--good);}
+  .fb.no{color:var(--bad);}
+  .steps{display:none;margin-top:.8rem;border:1px dashed var(--mark);background:var(--mark-soft);
+    border-radius:11px;padding:.9rem 1.1rem;font-size:.98rem;}
+  .steps ol{margin:.3rem 0;padding-left:1.2rem;}
+  .steps li{margin:.45rem 0;}
+
+  .cell-in,.num-in,.eig-in{font-family:var(--mono);width:3rem;text-align:center;padding:.3rem;
+    border:1.5px solid var(--line-strong);border-radius:6px;background:var(--paper);color:var(--ink);
+    font-size:1rem;font-variant-numeric:tabular-nums;}
+  .eig-in{width:3.6rem;}
+  .cell-in:focus,.num-in:focus,.eig-in:focus{outline:2px solid var(--accent);outline-offset:1px;border-color:var(--accent);}
+  .good-in{border-color:var(--good)!important;background:var(--good-soft)!important;}
+  .bad-in{border-color:var(--bad)!important;background:var(--bad-soft)!important;}
+  .matinput{gap:.35rem .5rem;}
+  .rankgrp{display:inline-flex;gap:.35rem;vertical-align:middle;}
+  .rank-btn{font-family:var(--mono);font-size:1rem;width:2.4rem;padding:.3rem;border:1.5px solid var(--line-strong);
+    background:var(--paper);color:var(--ink);border-radius:6px;cursor:pointer;}
+  .rank-btn:hover{border-color:var(--accent);}
+  .rank-btn.sel{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .rank-btn.sel.good-in{background:var(--good);border-color:var(--good);color:#fff;}
+  .rank-btn.sel.bad-in{background:var(--bad);border-color:var(--bad);color:#fff;}
+
+  footer{margin-top:2.6rem;text-align:center;font-family:var(--sans);font-size:.8rem;color:var(--ink-faint);}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="toprow">
+      <div>
+        <p class="eyebrow">Control Systems · Lecture 10</p>
+        <h1>Observability, Observers &amp; Observer-Based Control</h1>
+        <p class="sub">Work each problem yourself first. Peel hints one at a time — and if the math itself trips you up, jump to a crash course.</p>
+      </div>
+      <button class="themebtn" id="theme">◐ Theme</button>
+    </div>
+    <nav class="nav">
+      <button id="navTest" class="on">Lesson&nbsp;10 Test</button>
+      <button id="navCourses">Math Crash Courses</button>
+    </nav>
+  </header>
+
+  <!-- TEST VIEW -->
+  <div id="view-test">
+    <div class="progress">
+      <div class="track"><div class="fill" id="fill"></div></div>
+      <span class="ptext" id="ptext">0 / 4 marked understood</span>
+    </div>
+    <main id="app"></main>
+  </div>
+
+  <!-- COURSES VIEW -->
+  <div id="view-courses" style="display:none">
+    <p class="intro">Three building blocks power every question in this test. Read the refresher, then hit <b>New problem</b> and drill until it feels automatic — the numbers are randomized each time.</p>
+    <div class="pills" id="pills"></div>
+    <div id="course-body"></div>
+  </div>
+
+  <footer>Study aid · progress is remembered on this device.</footer>
+</div>
+
+<script>
+/* ================= helpers ================= */
+function mat(rows, plain){
+  const cols = rows[0].length;
+  const cells = rows.flat().map(c=>`<span>${c}</span>`).join("");
+  return `<span class="mat${plain?' plain':''}" style="grid-template-columns:repeat(${cols},auto)">${cells}</span>`;
+}
+function matIn(r,c){
+  let cells="";
+  for(let i=0;i<r;i++)for(let j=0;j<c;j++)
+    cells+=`<input class="cell-in" inputmode="text" aria-label="row ${i+1} column ${j+1}">`;
+  return `<span class="mat matinput" style="grid-template-columns:repeat(${c},auto)">${cells}</span>`;
+}
+const V=t=>`<span class="var">${t}</span>`;
+const OP=t=>`<span class="op">${t}</span>`;
+const randInt=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
+const fmt=n=> n<0 ? "−"+Math.abs(n) : ""+n;      /* signed display */
+const par=n=> "("+fmt(n)+")";
+function parseNum(v){
+  if(v==null)return NaN;
+  v=(""+v).trim().replace(/−/g,"-").replace(/\s+/g,"");
+  if(v===""||v==="-")return NaN;
+  return Number(v);
+}
+function compareCells(root, flatAns){
+  const ins=[...root.querySelectorAll(".cell-in")];
+  let ok=true;
+  ins.forEach((el,i)=>{
+    const good=parseNum(el.value)===flatAns[i];
+    el.classList.toggle("good-in",good);
+    el.classList.toggle("bad-in",!good);
+    if(!good)ok=false;
+  });
+  return ok;
+}
+
+/* shared state-space matrices for prompts */
+const A12=mat([["−3","0"],["1","−2"]]);
+const Bvec=mat([["0"],["1"]]);
+const Cout=mat([["0","1"]]);
+
+/* ================= test questions ================= */
+const Q=[
+{
+  topic:"Controllability",title:"Is the system controllable?",
+  brush:["matmul","detrank"],
+  prompt:`<div class="eq">
+    <div class="eqline">${V("ẋ")}${OP("(t) =")} ${A12} ${V("x")}${OP("(t) +")} ${Bvec} ${V("u")}${OP("(t)")}</div>
+    <div class="eqline">${V("y")}${OP("(t) =")} ${Cout} ${V("x")}${OP("(t)")}</div></div>`,
+  hints:[
+    `Controllable iff the controllability matrix 𝒞 = [ B &nbsp; AB ] has <b>full rank</b> (= n = 2). Only <b>A</b> and <b>B</b> matter.`,
+    `Compute the second column <span class="var">AB</span>: multiply A by B = [0, 1]ᵀ.`,
+    `You get ${mat([["0"],["−2"]])}. Stack beside B → 𝒞 = ${mat([["0","0"],["1","−2"]])}. Is it invertible?`,
+    `The first row of 𝒞 is all zeros ⇒ det 𝒞 = 0 ⇒ rank &lt; 2.`
+  ],
+  solution:`<ol>
+    <li>Build 𝒞 = [ B &nbsp; AB ] (n = 2).</li>
+    <li><span class="var">AB</span> = ${A12}${mat([["0"],["1"]])} = ${mat([["(−3)(0)+(0)(1)"],["(1)(0)+(−2)(1)"]],true)} = ${mat([["0"],["−2"]])}.</li>
+    <li>𝒞 = ${mat([["0","0"],["1","−2"]])}, det 𝒞 = (0)(−2) − (0)(1) = <mark>0</mark>.</li>
+    <li>rank 𝒞 = 1 &lt; 2 ⇒ <b>not controllable</b>.</li></ol>
+    <p class="rule">A is lower-triangular, so <span class="var">ẋ₁ = −3x₁</span> has no <span class="var">u</span> — the −3 mode can't be driven.</p>
+    <div class="answer"><b>Not controllable</b> — the mode at λ = −3 is uncontrollable.</div>`
+},
+{
+  topic:"Observability",title:"Is the system observable?",
+  brush:["matmul","detrank"],
+  prompt:`<div class="eq">
+    <div class="eqline">${V("ẋ")}${OP("(t) =")} ${A12} ${V("x")}${OP("(t) +")} ${Bvec} ${V("u")}${OP("(t)")}</div>
+    <div class="eqline">${V("y")}${OP("(t) =")} ${Cout} ${V("x")}${OP("(t)")}</div></div>`,
+  hints:[
+    `Observable iff 𝒪 = ${mat([["C"],["CA"]],true)} has full rank (= 2). Only <b>A</b> and <b>C</b> matter.`,
+    `C = [0 &nbsp; 1]. Compute the row <span class="var">CA</span> = C·A.`,
+    `CA = [0 &nbsp; 1]${A12} = [1 &nbsp; −2]. Stack C over CA.`,
+    `𝒪 = ${mat([["0","1"],["1","−2"]],true)} — check its determinant.`
+  ],
+  solution:`<ol>
+    <li>Build 𝒪 = ${mat([["C"],["CA"]],true)}, C = [0 &nbsp; 1].</li>
+    <li><span class="var">CA</span> = [0 &nbsp; 1]${A12} = [1 &nbsp; −2].</li>
+    <li>𝒪 = ${mat([["0","1"],["1","−2"]],true)}, det 𝒪 = (0)(−2) − (1)(1) = <mark>−1</mark>.</li>
+    <li>det 𝒪 ≠ 0 ⇒ rank 2 ⇒ <b>observable</b>.</li></ol>
+    <p class="rule">Same A, B as Q1 — but the answer flips. Controllability and observability are independent.</p>
+    <div class="answer"><b>Observable</b> — det 𝒪 = −1 ≠ 0.</div>`
+},
+{
+  topic:"Observer Design",title:"Design an observer gain L for a pole at −5",
+  brush:["eig"],
+  prompt:`<div class="eq">
+    <div class="eqline">${V("ẋ")}${OP("(t) =")}${OP("−")}${V("x")}${OP("(t) +")}${V("u")}${OP("(t)")}</div>
+    <div class="eqline">${V("y")}${OP("(t) =")}${V("x")}${OP("(t)")}</div></div>
+    <p>Design an observer gain <span class="var">L</span> so the observer has an eigenvalue at <b>−5</b>.</p>`,
+  hints:[
+    `The estimation error obeys <span class="var">ė = (A − LC)e</span>. The observer poles are the eigenvalues of <span class="var">A − LC</span>.`,
+    `Everything is scalar: A = −1, C = 1, so the eigenvalue is <span class="var">A − LC = −1 − L</span>.`,
+    `Set −1 − L = −5 and solve for L.`
+  ],
+  solution:`<ol>
+    <li><span class="var">ė = (A − LC)e</span>; scalar eigenvalue = −1 − L.</li>
+    <li>Place at −5: −1 − L = −5.</li>
+    <li>−L = −4 ⇒ <mark>L = 4</mark>.</li>
+    <li>Check: A − LC = −1 − (4)(1) = −5 ✓ — error decays like <span class="var">e<sup>−5t</sup></span>.</li></ol>
+    <div class="answer"><b>L = 4</b>, giving observer dynamics <span class="var">ė = −5e</span>.</div>`
+},
+{
+  topic:"State Feedback",title:"Closed-loop eigenvalues under state feedback",
+  brush:["matmul","eig"],
+  prompt:`<div class="eq"><div class="eqline">${V("ẋ")}${OP("(t) =")} ${mat([["1","2"],["2","1"]])} ${V("x")}${OP("(t) +")} ${mat([["1"],["1"]])} ${V("u")}${OP("(t)")}</div></div>
+    <p>with state feedback</p>
+    <div class="eq"><div class="eqline">${V("u")}${OP("(t) =")} ${mat([["−2","−2"]])} ${V("x")}${OP("(t)")}</div></div>
+    <p>What are the eigenvalues of the closed-loop system?</p>`,
+  hints:[
+    `Substitute <span class="var">u = Kx</span> ⇒ <span class="var">ẋ = (A + BK)x</span>. Find A + BK first.`,
+    `<span class="var">BK</span> is an outer product (2×1 times 1×2 = 2×2): ${mat([["1"],["1"]])}${mat([["−2","−2"]])}.`,
+    `BK = ${mat([["−2","−2"],["−2","−2"]])}. Add entrywise to A.`,
+    `A + BK = ${mat([["−1","0"],["0","−1"]])} — diagonal, so read the eigenvalues off.`
+  ],
+  solution:`<ol>
+    <li><span class="var">u = Kx</span> ⇒ <span class="var">ẋ = (A + BK)x</span>, K = [−2 &nbsp; −2].</li>
+    <li>BK = ${mat([["1"],["1"]])}${mat([["−2","−2"]])} = ${mat([["−2","−2"],["−2","−2"]])}.</li>
+    <li>A + BK = ${mat([["1","2"],["2","1"]])} + ${mat([["−2","−2"],["−2","−2"]])} = ${mat([["−1","0"],["0","−1"]])}.</li>
+    <li>det(sI − (A+BK)) = (s+1)² ⇒ <mark>λ = −1, −1</mark>.</li></ol>
+    <p class="rule">Open-loop A has eigenvalues +3 and −1 (unstable); feedback moves both poles to −1.</p>
+    <div class="answer"><b>λ = −1 and λ = −1</b> — stable, with a repeated pole.</div>`
+}
+];
+
+const COURSE_NAME={matmul:"Matrix multiplication",detrank:"Determinant & rank",eig:"Eigenvalues"};
+
+/* ================= render test ================= */
+const app=document.getElementById("app");
+const KEY="ctrl-l10-done";
+let done={};
+try{done=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){done={};}
+
+Q.forEach((q,i)=>{
+  const card=document.createElement("section");
+  card.className="card"+(done[i]?" done":"");
+  const nh=q.hints.length;
+  const brush=q.brush.map(id=>`<a data-course="${id}">${COURSE_NAME[id]} →</a>`).join("");
+  card.innerHTML=`
+    <div class="qhead"><span class="qnum">${i+1}</span>
+      <div><span class="topic">${q.topic}</span><h2 class="qtitle">${q.title}</h2></div></div>
+    <div class="prompt">${q.prompt}</div>
+    <div class="brush"><span class="lbl">Brush up</span>${brush}</div>
+    <div class="actions">
+      <button class="act primary" data-role="hint">💡 Reveal hint <span data-role="hcount">(0/${nh})</span></button>
+      <button class="act" data-role="sol">Show full solution</button>
+      <button class="act gotit ${done[i]?'on':''}" data-role="got">${done[i]?'✓ Understood':'Mark as understood'}</button>
+    </div>
+    <div class="hints" data-role="hints"></div>
+    <div data-role="solwrap"></div>`;
+  app.appendChild(card);
+
+  const hintBox=card.querySelector("[data-role=hints]");
+  const hintBtn=card.querySelector("[data-role=hint]");
+  const hcount=card.querySelector("[data-role=hcount]");
+  const solBtn=card.querySelector("[data-role=sol]");
+  const solWrap=card.querySelector("[data-role=solwrap]");
+  const gotBtn=card.querySelector("[data-role=got]");
+  let shown=0,solOpen=false;
+
+  hintBtn.addEventListener("click",()=>{
+    if(shown>=nh)return;
+    const h=document.createElement("div");
+    h.className="hint";
+    h.innerHTML=`<span class="htag">Hint ${shown+1}</span>${q.hints[shown]}`;
+    hintBox.appendChild(h);shown++;
+    if(shown>=nh){hintBtn.disabled=true;hintBtn.innerHTML="All hints shown";}
+    else hintBtn.innerHTML=`💡 Next hint <span>(${shown}/${nh})</span>`;
+  });
+  solBtn.addEventListener("click",()=>{
+    solOpen=!solOpen;
+    solWrap.innerHTML=solOpen?`<div class="solution"><span class="stag">Worked solution</span>${q.solution}</div>`:"";
+    solBtn.textContent=solOpen?"Hide solution":"Show full solution";
+  });
+  gotBtn.addEventListener("click",()=>{
+    done[i]=!done[i];
+    gotBtn.classList.toggle("on",done[i]);
+    gotBtn.textContent=done[i]?"✓ Understood":"Mark as understood";
+    card.classList.toggle("done",done[i]);
+    localStorage.setItem(KEY,JSON.stringify(done));
+    updateProgress();
+  });
+  card.querySelectorAll(".brush a").forEach(a=>
+    a.addEventListener("click",()=>goCourse(a.dataset.course)));
+});
+
+function updateProgress(){
+  const n=Q.filter((_,i)=>done[i]).length;
+  document.getElementById("fill").style.width=(n/Q.length*100)+"%";
+  document.getElementById("ptext").textContent=`${n} / ${Q.length} marked understood`;
+}
+updateProgress();
+
+/* ================= crash courses ================= */
+const COURSES={
+ matmul:{
+  name:"Matrix multiplication",
+  tag:"The engine behind 𝒞, 𝒪 and BK",
+  concept:`
+    <h3>The rule</h3>
+    <p>To multiply two matrices, the entry in <b>row i, column j</b> of the result is the
+      <b>dot product</b> of row i of the left matrix with column j of the right matrix:
+      multiply matching elements and add them up.</p>
+    <div class="key">Entry(i,j) = (row i of left) · (column j of right) = a<sub>i1</sub>b<sub>1j</sub> + a<sub>i2</sub>b<sub>2j</sub> + …</div>
+    <p><b>Dimensions:</b> an (m×n) times an (n×p) gives an (m×p). The two inner numbers must match
+      — that shared <b>n</b> is what you sum over.</p>
+    <h3>The cases you'll actually meet</h3>
+    <p>• <b>Matrix × vector</b> (2×2 · 2×1 → 2×1): as in <span class="var">AB</span> and <span class="var">CA</span>ᵀ.<br>
+       • <b>Row × matrix</b> (1×2 · 2×2 → 1×2): as in <span class="var">CA</span>.<br>
+       • <b>Outer product</b> (2×1 · 1×2 → 2×2): as in <span class="var">BK</span> — a column times a row fills a whole matrix.</p>
+    <h3>Worked example</h3>
+    <p>${mat([["−3","0"],["1","−2"]])}${mat([["0"],["1"]])}:</p>
+    <p>Top entry = (−3)(0) + (0)(1) = 0. &nbsp; Bottom entry = (1)(0) + (−2)(1) = −2. &nbsp; Result = ${mat([["0"],["−2"]])}.</p>`,
+  gen:genMatMul
+ },
+ detrank:{
+  name:"Determinant & rank of a 2×2",
+  tag:"The controllability / observability test itself",
+  concept:`
+    <h3>Determinant</h3>
+    <div class="key">det ${mat([["a","b"],["c","d"]])} = ad − bc</div>
+    <p>Multiply the main diagonal, subtract the anti-diagonal. That single number tells you almost everything for a 2×2.</p>
+    <h3>Rank</h3>
+    <p>Rank = the number of genuinely independent rows (equivalently columns). For a 2×2:</p>
+    <p>• <b>det ≠ 0</b> → rank <b>2</b> (full rank, invertible).<br>
+       • <b>det = 0</b> but not all entries zero → rank <b>1</b> (rows are multiples of each other).<br>
+       • <b>all entries 0</b> → rank <b>0</b>.</p>
+    <div class="key">In control: a system is controllable / observable exactly when its 𝒞 / 𝒪 matrix has <b>full rank</b> (rank = n). For 2×2 that just means <b>det ≠ 0</b>.</div>
+    <h3>Worked example</h3>
+    <p>det ${mat([["0","1"],["1","−2"]])} = (0)(−2) − (1)(1) = −1 ≠ 0 ⇒ rank 2 (full rank ⇒ observable).</p>`,
+  gen:genDet
+ },
+ eig:{
+  name:"Eigenvalues of a 2×2",
+  tag:"Poles, stability & pole placement",
+  concept:`
+    <h3>Definition</h3>
+    <p>The eigenvalues <span class="var">λ</span> of A solve <b>det(A − λI) = 0</b>. They are the system's
+      <b>poles</b>: negative real parts ⇒ stable, positive ⇒ unstable.</p>
+    <h3>The 2×2 shortcut</h3>
+    <div class="key">λ² − (trace)·λ + (det) = 0, &nbsp; where trace = a + d and det = ad − bc</div>
+    <p>Then solve the quadratic — factor it, or use λ = [ trace ± √(trace² − 4·det) ] / 2.
+      A diagonal or triangular matrix is even easier: the eigenvalues are just the diagonal entries.</p>
+    <h3>Where it shows up here</h3>
+    <p>• <b>Observer design:</b> poles are eigenvalues of <span class="var">A − LC</span> — pick L to place them.<br>
+       • <b>State feedback:</b> poles are eigenvalues of <span class="var">A + BK</span> — pick K to place them.</p>
+    <h3>Worked example</h3>
+    <p>${mat([["1","2"],["2","1"]])}: trace = 2, det = (1)(1) − (2)(2) = −3.
+      So λ² − 2λ − 3 = 0 ⇒ (λ − 3)(λ + 1) = 0 ⇒ <mark>λ = 3, −1</mark>.</p>`,
+  gen:genEig
+ }
+};
+
+/* ---- practice generators ---- */
+function genMatMul(){
+  const type=pick(["mv","rm","outer"]);
+  if(type==="mv"){
+    const A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
+    const v=[randInt(-3,3),randInt(-3,3)];
+    const r=[A[0][0]*v[0]+A[0][1]*v[1], A[1][0]*v[0]+A[1][1]*v[1]];
+    return {
+      html:`<div class="eq"><div class="eqline">
+        ${mat([[fmt(A[0][0]),fmt(A[0][1])],[fmt(A[1][0]),fmt(A[1][1])]])}
+        ${mat([[fmt(v[0])],[fmt(v[1])]])} ${OP("=")} ${matIn(2,1)}</div></div>`,
+      steps:`<ol>
+        <li>Row 1 · column: ${par(A[0][0])}${par(v[0])} + ${par(A[0][1])}${par(v[1])} = <b>${fmt(r[0])}</b></li>
+        <li>Row 2 · column: ${par(A[1][0])}${par(v[0])} + ${par(A[1][1])}${par(v[1])} = <b>${fmt(r[1])}</b></li></ol>`,
+      check:root=>compareCells(root,r)
+    };
+  }
+  if(type==="rm"){
+    const row=[randInt(-3,3),randInt(-3,3)];
+    const M=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
+    const r=[row[0]*M[0][0]+row[1]*M[1][0], row[0]*M[0][1]+row[1]*M[1][1]];
+    return {
+      html:`<div class="eq"><div class="eqline">
+        ${mat([[fmt(row[0]),fmt(row[1])]])}
+        ${mat([[fmt(M[0][0]),fmt(M[0][1])],[fmt(M[1][0]),fmt(M[1][1])]])} ${OP("=")} ${matIn(1,2)}</div></div>`,
+      steps:`<ol>
+        <li>Col 1: ${par(row[0])}${par(M[0][0])} + ${par(row[1])}${par(M[1][0])} = <b>${fmt(r[0])}</b></li>
+        <li>Col 2: ${par(row[0])}${par(M[0][1])} + ${par(row[1])}${par(M[1][1])} = <b>${fmt(r[1])}</b></li></ol>`,
+      check:root=>compareCells(root,r)
+    };
+  }
+  // outer product col(2x1) * row(1x2) -> 2x2
+  const col=[randInt(-3,3),randInt(-3,3)];
+  const row=[randInt(-3,3),randInt(-3,3)];
+  const r=[col[0]*row[0],col[0]*row[1],col[1]*row[0],col[1]*row[1]];
+  return {
+    html:`<div class="eq"><div class="eqline">
+      ${mat([[fmt(col[0])],[fmt(col[1])]])}
+      ${mat([[fmt(row[0]),fmt(row[1])]])} ${OP("=")} ${matIn(2,2)}</div></div>`,
+    steps:`<p>Each entry is (row-value from the column)×(column-value from the row):</p><ol>
+      <li>(1,1)=${par(col[0])}${par(row[0])}=<b>${fmt(r[0])}</b> &nbsp; (1,2)=${par(col[0])}${par(row[1])}=<b>${fmt(r[1])}</b></li>
+      <li>(2,1)=${par(col[1])}${par(row[0])}=<b>${fmt(r[2])}</b> &nbsp; (2,2)=${par(col[1])}${par(row[1])}=<b>${fmt(r[3])}</b></li></ol>`,
+    check:root=>compareCells(root,r)
+  };
+}
+
+function genDet(){
+  let A,det;
+  do{ A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
+      det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
+  }while(false);
+  const anyNonZero=A.flat().some(x=>x!==0);
+  const rank= det!==0 ? 2 : (anyNonZero?1:0);
+  return {
+    html:`<div class="eq"><div class="eqline">A = ${mat([[fmt(A[0][0]),fmt(A[0][1])],[fmt(A[1][0]),fmt(A[1][1])]])}</div></div>
+      <p style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center">
+        det A = <input class="num-in" inputmode="text" aria-label="determinant"></p>
+      <p style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center">
+        rank A = <span class="rankgrp">
+          <button class="rank-btn" data-v="0">0</button>
+          <button class="rank-btn" data-v="1">1</button>
+          <button class="rank-btn" data-v="2">2</button></span></p>`,
+    wire:root=>{
+      root.querySelectorAll(".rank-btn").forEach(b=>b.addEventListener("click",()=>{
+        root.querySelectorAll(".rank-btn").forEach(x=>x.classList.remove("sel","good-in","bad-in"));
+        b.classList.add("sel");
+      }));
+    },
+    steps:`<ol>
+      <li>det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = ${fmt(A[0][0]*A[1][1])} − ${fmt(A[0][1]*A[1][0])} = <b>${fmt(det)}</b></li>
+      <li>${det!==0?"det ≠ 0 ⇒ rank <b>2</b> (full rank)":(anyNonZero?"det = 0 but entries aren't all zero ⇒ rank <b>1</b>":"all entries zero ⇒ rank <b>0</b>")}.</li></ol>`,
+    check:root=>{
+      const numEl=root.querySelector(".num-in");
+      const numOk=parseNum(numEl.value)===det;
+      numEl.classList.toggle("good-in",numOk);numEl.classList.toggle("bad-in",!numOk);
+      const sel=root.querySelector(".rank-btn.sel");
+      const rankOk=!!sel && (+sel.dataset.v)===rank;
+      root.querySelectorAll(".rank-btn").forEach(b=>b.classList.remove("good-in","bad-in"));
+      if(sel)sel.classList.add(rankOk?"good-in":"bad-in");
+      return numOk&&rankOk;
+    }
+  };
+}
+
+function isSq(n){const s=Math.round(Math.sqrt(n));return s*s===n?s:-1;}
+function genEig(){
+  let A,tr,det,disc,s,l1,l2,ok=false;
+  for(let k=0;k<400 && !ok;k++){
+    A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
+    tr=A[0][0]+A[1][1];
+    det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
+    disc=tr*tr-4*det;
+    if(disc<0)continue;
+    s=isSq(disc);
+    if(s<0)continue;
+    if((tr+s)%2!==0)continue;          // ensure integer eigenvalues
+    l1=(tr+s)/2; l2=(tr-s)/2;
+    if(A[0][1]===0&&A[1][0]===0)continue; // avoid trivially-diagonal
+    ok=true;
+  }
+  if(!ok){A=[[1,2],[2,1]];tr=2;det=-3;disc=16;s=4;l1=3;l2=-1;}
+  return {
+    html:`<div class="eq"><div class="eqline">A = ${mat([[fmt(A[0][0]),fmt(A[0][1])],[fmt(A[1][0]),fmt(A[1][1])]])}</div>
+      <div class="eqline" style="margin-top:.4rem">λ = <input class="eig-in" inputmode="text" aria-label="first eigenvalue">
+        , &nbsp; <input class="eig-in" inputmode="text" aria-label="second eigenvalue"></div></div>`,
+    steps:`<ol>
+      <li>trace = ${fmt(A[0][0])} + ${fmt(A[1][1])} = <b>${fmt(tr)}</b>; &nbsp; det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = <b>${fmt(det)}</b>.</li>
+      <li>Characteristic equation: λ² − ${fmt(tr)}λ + ${fmt(det)} = 0${tr<0?" (i.e. λ² + "+Math.abs(tr)+"λ …)":""}.</li>
+      <li>λ = [ ${fmt(tr)} ± √(${fmt(tr)}² − 4·${fmt(det)}) ] / 2 = [ ${fmt(tr)} ± √${disc} ] / 2 = [ ${fmt(tr)} ± ${s} ] / 2.</li>
+      <li>⇒ <b>λ = ${fmt(l1)}</b> and <b>λ = ${fmt(l2)}</b> (order doesn't matter).</li></ol>`,
+    check:root=>{
+      const ins=[...root.querySelectorAll(".eig-in")];
+      const vals=ins.map(el=>parseNum(el.value));
+      if(vals.some(v=>isNaN(v))){ins.forEach(el=>{el.classList.add("bad-in");el.classList.remove("good-in");});return false;}
+      const t=[l1,l2];const matched=[];
+      vals.forEach(v=>{const idx=t.indexOf(v);if(idx>=0){t.splice(idx,1);matched.push(true);}else matched.push(false);});
+      ins.forEach((el,i)=>{el.classList.toggle("good-in",matched[i]);el.classList.toggle("bad-in",!matched[i]);});
+      return t.length===0 && matched.every(Boolean);
+    }
+  };
+}
+
+/* ---- render a course ---- */
+const pillsEl=document.getElementById("pills");
+const courseBody=document.getElementById("course-body");
+let activeCourse="matmul";
+Object.keys(COURSES).forEach(id=>{
+  const b=document.createElement("button");
+  b.className="pill";b.textContent=COURSES[id].name;b.dataset.id=id;
+  b.addEventListener("click",()=>selectCourse(id));
+  pillsEl.appendChild(b);
+});
+
+function selectCourse(id){
+  activeCourse=id;
+  pillsEl.querySelectorAll(".pill").forEach(p=>p.classList.toggle("on",p.dataset.id===id));
+  const c=COURSES[id];
+  courseBody.innerHTML=`
+    <div class="cshead"><span class="topic">${c.tag}</span><h2>${c.name}</h2></div>
+    <div class="concept">${c.concept}</div>
+    <div class="practice">
+      <div class="pracHead"><span class="stag">Practice</span>
+        <button class="act" data-a="new">↻ New problem</button></div>
+      <div class="prob"></div>
+      <div class="pracActions">
+        <button class="act primary" data-a="check">Check answer</button>
+        <button class="act" data-a="steps">Show steps</button></div>
+      <div class="fb"></div>
+      <div class="steps"></div>
+    </div>`;
+  initPractice(courseBody.querySelector(".practice"), c.gen);
+}
+
+function initPractice(widget, genFn){
+  const probEl=widget.querySelector(".prob");
+  const fb=widget.querySelector(".fb");
+  const steps=widget.querySelector(".steps");
+  const checkBtn=widget.querySelector('[data-a=check]');
+  const stepsBtn=widget.querySelector('[data-a=steps]');
+  const newBtn=widget.querySelector('[data-a=new]');
+  let cur;
+  function load(){
+    cur=genFn();
+    probEl.innerHTML=cur.html;
+    if(cur.wire)cur.wire(probEl);
+    fb.className="fb";fb.textContent="";
+    steps.innerHTML="";steps.style.display="none";stepsBtn.textContent="Show steps";
+  }
+  checkBtn.onclick=()=>{
+    const ok=cur.check(probEl);
+    fb.className="fb "+(ok?"ok":"no");
+    fb.textContent=ok?"✓ Correct — nice work!":"Not quite — fix the highlighted entries, or peek at the steps.";
+  };
+  stepsBtn.onclick=()=>{
+    const open=steps.style.display!=="none";
+    if(open){steps.style.display="none";stepsBtn.textContent="Show steps";}
+    else{steps.innerHTML=cur.steps;steps.style.display="block";stepsBtn.textContent="Hide steps";}
+  };
+  newBtn.onclick=load;
+  load();
+}
+selectCourse("matmul");
+
+/* ================= view switching ================= */
+const vTest=document.getElementById("view-test");
+const vCourses=document.getElementById("view-courses");
+const navTest=document.getElementById("navTest");
+const navCourses=document.getElementById("navCourses");
+function showView(which){
+  const test=which==="test";
+  vTest.style.display=test?"":"none";
+  vCourses.style.display=test?"none":"";
+  navTest.classList.toggle("on",test);
+  navCourses.classList.toggle("on",!test);
+}
+navTest.addEventListener("click",()=>showView("test"));
+navCourses.addEventListener("click",()=>showView("courses"));
+function goCourse(id){showView("courses");selectCourse(id);window.scrollTo({top:0,behavior:"smooth"});}
+
+/* ================= theme ================= */
+const root=document.documentElement;
+document.getElementById("theme").addEventListener("click",()=>{
+  const cur=root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
+  root.setAttribute("data-theme",cur==="dark"?"light":"dark");
+});
+</script>
+</body>
+</html>
