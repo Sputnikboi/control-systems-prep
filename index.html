@@ -862,11 +862,13 @@ const LESSONS=[
     prompt:`${ss(mat([["−3","0"],["1","−2"]]),mat([["0"],["1"]]),mat([["0","1"]]))}<p>Is the system observable?</p>`,
     hints:[
       `Observable ⇔ 𝒪 = [C; CA] has full rank. Only A and C matter.`,
-      `C = [0 1], so CA = C·A = [1 −2].`
+      `C = [0 1] is a 1×2 <b>row</b> (not a column), so CA = C·A is (1×2)·(2×2) = a 1×2 row: CA = [1 −2].`
     ],
     solution:`<ol>
-      <li>CA = [1 −2] ⇒ 𝒪 = ${mat([["0","1"],["1","−2"]],true)}, det = −1 ≠ 0.</li></ol>
-      <div class="answer"><b>Observable.</b> Same A, B as the previous question — yet observability holds. The two properties are independent.</div>`,
+      <li><b>C is a row.</b> C = [0&nbsp; 1] has one row and two columns → it's 1×2. (It must be, so that y = Cx comes out as a single number.)</li>
+      <li><b>CA is a row too.</b> CA = C·A = (1×2)·(2×2); a row times a matrix gives a row (the inner 2's cancel, leaving 1×2): &nbsp; [0&nbsp; 1]${mat([["−3","0"],["1","−2"]])} = [ (0)(−3)+(1)(1) &nbsp;&nbsp; (0)(0)+(1)(−2) ] = [1&nbsp; −2].</li>
+      <li><b>Stack them.</b> 𝒪 puts the row C on top of the row CA → 2 rows, 2 columns = 2×2: 𝒪 = ${mat([["0","1"],["1","−2"]],true)}. det 𝒪 = (0)(−2) − (1)(1) = <mark>−1</mark> ≠ 0 ⇒ full rank.</li></ol>
+      <div class="answer"><b>Observable</b> — det 𝒪 = −1 ≠ 0. (Same A, B as Q1, yet observability holds — the two properties are independent.)</div>`,
   },
   { topic:"Observer gain", brush:["eig"],
     prompt:`${TF("ẋ = −x + u, &nbsp; y = x")}<p>Design an observer gain <span class="var">L</span> so the observer has an eigenvalue at −5.</p>`,
@@ -1125,15 +1127,35 @@ const COURSES={
  eig:{
   name:"Eigenvalues of a 2×2", tag:"Poles, stability & pole placement",
   concept:`
-    <h3>Definition</h3>
-    <p>Eigenvalues λ solve det(A − λI) = 0 — they are the system's <b>poles</b> (Re &lt; 0 ⇒ stable).</p>
-    <h3>2×2 shortcut</h3>
-    <div class="key">λ² − (trace)·λ + (det) = 0, &nbsp; trace = a + d, det = ad − bc</div>
-    <p>Solve the quadratic (factor or λ = [trace ± √(trace²−4det)]/2). Diagonal/triangular ⇒ read the diagonal.</p>
-    <h3>Where it shows up</h3>
-    <p>• Observer poles = eig(A − LC). &nbsp; • State-feedback poles = eig(A + BF).</p>
-    <h3>Example</h3>
-    <p>${mat([["1","2"],["2","1"]])}: trace 2, det −3 ⇒ λ² − 2λ − 3 = (λ−3)(λ+1) ⇒ λ = 3, −1.</p>`,
+    <h3>What an eigenvalue is (the intuition)</h3>
+    <p>Every square matrix has a couple of special numbers called <b>eigenvalues</b>. In control they're the system's <b>poles</b>, and they tell you how it behaves over time:</p>
+    <p>• a <b>negative</b> eigenvalue ⇒ that part of the response <b>decays</b> away (good — stable);<br>
+       • a <b>positive</b> one ⇒ it <b>grows</b> (unstable);<br>
+       • a <b>complex pair</b> ⇒ the response <b>oscillates</b>.</p>
+    <p>Most of the time, finding them is all you need to answer "is it stable, and how does it move?"</p>
+
+    <h3>The recipe for any 2×2</h3>
+    <p>Take A = ${mat([["a","b"],["c","d"]])}. You only need two easy numbers from it:</p>
+    <div class="key"><b>trace</b> = a + d &nbsp;— just add the two diagonal entries<br>
+      <b>det</b> = ad − bc &nbsp;— (top-left × bottom-right) − (top-right × bottom-left)</div>
+    <p><b>Step 1 —</b> compute the trace and the determinant.<br>
+       <b>Step 2 —</b> write the quadratic &nbsp;<b>λ² − (trace)·λ + (det) = 0</b>.<br>
+       <b>Step 3 —</b> solve it. The two answers are your eigenvalues.</p>
+    <p class="rule">⚠️ The trap in Step 2 is the sign: the middle term is <b>minus the trace</b>. So if the trace is −2, then −(−2) = +2 and you write λ² <b>+</b> 2λ + …</p>
+
+    <h3>Solving the quadratic</h3>
+    <p>Factor it if you can, otherwise use the formula:</p>
+    <div class="key">λ = [ trace ± √( trace² − 4·det ) ] / 2</div>
+    <p><b>Shortcut:</b> if the matrix is <b>diagonal or triangular</b> (a 0 in one of the off-diagonal corners), skip everything — the eigenvalues are just the two diagonal entries a and d.</p>
+
+    <h3>Fully worked example</h3>
+    <p>A = ${mat([["1","2"],["2","1"]])}</p>
+    <p>Step 1: trace = 1 + 1 = <b>2</b>; &nbsp; det = (1)(1) − (2)(2) = 1 − 4 = <b>−3</b>.</p>
+    <p>Step 2: λ² − (2)λ + (−3) = 0 &nbsp;→&nbsp; λ² − 2λ − 3 = 0.</p>
+    <p>Step 3: factor → (λ − 3)(λ + 1) = 0 &nbsp;⇒&nbsp; <mark>λ = 3 and λ = −1</mark>. (A positive one ⇒ this system is unstable.)</p>
+
+    <h3>Where it shows up in the test</h3>
+    <p>• System stability = eigenvalues of <b>A</b>. &nbsp;• Observer poles = eigenvalues of <b>A − LC</b>. &nbsp;• State-feedback poles = eigenvalues of <b>A + BF</b>.</p>`,
   gen:genEig }
 };
 
