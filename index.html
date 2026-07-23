@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Interactive practice for the Control Systems Lecture 10 test: hints, worked solutions, and math crash courses.">
+<meta name="description" content="Interactive control-systems exam prep: per-lesson tests with progressive hints and worked solutions, math crash courses, and a whiteboard.">
 <meta name="theme-color" content="#f5f7fa" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#0e151f" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Control Prep">
-<title>Control Systems · Lecture 10 Test</title>
+<title>Control Systems · Exam Prep</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%F0%9F%8E%9B%EF%B8%8F%3C/text%3E%3C/svg%3E">
 <style>
   :root{
@@ -59,19 +59,48 @@
     background:var(--panel);color:var(--ink-soft);border-radius:999px;padding:.4rem .8rem;cursor:pointer;white-space:nowrap;}
   .themebtn:hover{border-color:var(--accent);color:var(--accent-ink);}
 
-  /* top nav tabs */
-  .nav{display:flex;gap:.4rem;margin:1.4rem 0 0;border-bottom:1px solid var(--line);}
-  .nav button{font-family:var(--sans);font-size:.92rem;font-weight:600;background:none;border:0;
-    color:var(--ink-faint);padding:.6rem .3rem;margin-right:1rem;cursor:pointer;border-bottom:2px solid transparent;
-    margin-bottom:-1px;transition:.15s;}
-  .nav button:hover{color:var(--ink);}
+  .nav{display:flex;gap:.4rem;margin:1.4rem 0 0;border-bottom:1px solid var(--line);align-items:center;}
+  .nav button,.nav a{font-family:var(--sans);font-size:.92rem;font-weight:600;background:none;border:0;
+    color:var(--ink-faint);padding:.6rem .3rem;margin-right:1.1rem;cursor:pointer;border-bottom:2px solid transparent;
+    margin-bottom:-1px;transition:.15s;text-decoration:none;display:inline-block;}
+  .nav button:hover,.nav a:hover{color:var(--ink);}
   .nav button.on{color:var(--accent-ink);border-bottom-color:var(--accent);}
+  .nav a.navlink{margin-left:auto;margin-right:0;color:var(--accent-ink);}
+  .nav a.navlink:hover{color:var(--accent);}
 
-  .progress{margin:1.4rem 0 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  /* lesson picker */
+  .lgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1rem;margin-top:1.5rem;}
+  .lcard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:1.1rem 1.2rem;
+    box-shadow:var(--shadow);cursor:pointer;transition:.18s;text-align:left;font-family:inherit;color:inherit;
+    display:flex;flex-direction:column;gap:.5rem;}
+  .lcard:hover{border-color:var(--accent);transform:translateY(-2px);}
+  .lcard:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .lcard.complete{border-color:var(--good);}
+  .lcard .lnum{font-family:var(--sans);font-size:.68rem;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:var(--ink-faint);}
+  .lcard.custom .lnum{color:var(--mark-ink);}
+  .lcard .lt{font-size:1.1rem;font-weight:600;line-height:1.25;}
+  .lcard .lb{font-family:var(--sans);font-size:.83rem;color:var(--ink-soft);flex:1;}
+  .lcard .lp{display:flex;align-items:center;gap:.55rem;font-family:var(--sans);font-size:.75rem;
+    color:var(--ink-faint);font-variant-numeric:tabular-nums;}
+  .ltrack{flex:1;height:5px;background:var(--line);border-radius:99px;overflow:hidden;}
+  .lfill{height:100%;width:0;background:var(--good);border-radius:99px;transition:width .3s;}
+  .tag-ok{color:var(--good);font-weight:700;}
+
+  .backbtn{font-family:var(--sans);font-size:.85rem;font-weight:600;background:none;border:0;color:var(--ink-soft);
+    cursor:pointer;padding:.3rem 0;margin-top:1rem;display:inline-flex;align-items:center;gap:.3rem;}
+  .backbtn:hover{color:var(--accent-ink);}
+
+  .progress{margin:1rem 0 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;
     padding:.85rem 1rem;display:flex;align-items:center;gap:.9rem;box-shadow:var(--shadow);}
   .track{flex:1;height:7px;background:var(--line);border-radius:99px;overflow:hidden;}
   .fill{height:100%;width:0;background:var(--good);border-radius:99px;transition:width .35s ease;}
   .ptext{font-family:var(--sans);font-size:.82rem;color:var(--ink-soft);white-space:nowrap;font-variant-numeric:tabular-nums;}
+
+  .lessonhead{margin-top:1.2rem;}
+  .lessonhead .topic{margin-bottom:.2rem;display:block;}
+  .lessonhead h2{font-size:clamp(1.4rem,3.5vw,2rem);margin:.1rem 0 .3rem;font-weight:600;line-height:1.2;}
+  .lessonhead .ldesc{color:var(--ink-soft);font-family:var(--sans);font-size:.92rem;margin:0;}
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;
     padding:clamp(1.1rem,3vw,1.8rem);margin-top:1.5rem;box-shadow:var(--shadow);transition:border-color .25s;}
@@ -90,6 +119,7 @@
   .eqline{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:.45rem;width:100%;}
   .var{font-style:italic;}
   .op{color:var(--ink-soft);padding:0 .1rem;}
+  .tf{font-family:var(--mono);font-size:.98rem;}
 
   .mat{position:relative;display:inline-grid;gap:.2rem .9rem;padding:.35rem .55rem;
     font-variant-numeric:tabular-nums;line-height:1.1;}
@@ -99,7 +129,16 @@
   .mat::after{right:0;border-left:0;}
   .mat.plain > span{font-style:normal;}
 
-  /* brush-up links */
+  .fignote{font-family:var(--sans);font-size:.84rem;color:var(--ink-faint);background:var(--paper);
+    border:1px dashed var(--line-strong);border-radius:8px;padding:.5rem .75rem;margin:.7rem 0;}
+
+  /* block-diagram svg */
+  .dia{display:block;margin:1rem auto;max-width:100%;height:auto;}
+  .dia line,.dia path.stroke{stroke:var(--ink);stroke-width:1.6;fill:none;}
+  .dia rect,.dia circle{stroke:var(--ink);stroke-width:1.6;fill:var(--panel);}
+  .dia text{fill:var(--ink);font-family:var(--sans);font-size:13px;}
+  .dia .sig{fill:var(--ink-soft);font-style:italic;}
+
   .brush{display:flex;flex-wrap:wrap;align-items:center;gap:.5rem;margin:0 0 1rem;
     font-family:var(--sans);font-size:.82rem;color:var(--ink-faint);}
   .brush .lbl{font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:.68rem;}
@@ -125,7 +164,7 @@
   .hint .htag{font-family:var(--sans);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
     color:var(--accent-ink);font-weight:700;display:block;margin-bottom:.2rem;}
   @keyframes slide{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-  @media (prefers-reduced-motion:reduce){.hint,.solution{animation:none}.fill{transition:none}}
+  @media (prefers-reduced-motion:reduce){.hint,.solution{animation:none}.fill,.lfill{transition:none}}
 
   .solution{margin-top:1rem;border:1px dashed var(--mark);background:var(--mark-soft);border-radius:11px;
     padding:1rem 1.1rem;animation:slide .3s ease;}
@@ -137,7 +176,6 @@
   mark{background:var(--mark-soft);color:var(--mark-ink);padding:0 .18em;border-radius:3px;font-weight:600;}
   .rule{color:var(--ink-soft);font-size:.94rem;}
 
-  /* ---- crash courses ---- */
   .intro{color:var(--ink-soft);margin:1.4rem 0 0;font-size:1.02rem;}
   .pills{display:flex;flex-wrap:wrap;gap:.5rem;margin:1.2rem 0 0;}
   .pill{font-family:var(--sans);font-size:.86rem;font-weight:600;border:1px solid var(--line-strong);
@@ -203,30 +241,36 @@
   <header>
     <div class="toprow">
       <div>
-        <p class="eyebrow">Control Systems · Lecture 10</p>
-        <h1>Observability, Observers &amp; Observer-Based Control</h1>
-        <p class="sub">Work each problem yourself first. Peel hints one at a time — and if the math itself trips you up, jump to a crash course.</p>
+        <p class="eyebrow">Control Systems · Reguleringsteknik</p>
+        <h1>Exam Prep</h1>
+        <p class="sub">Pick a lesson, work each problem yourself, then peel hints one at a time. Stuck on the math? Jump to a crash course. Need scratch space? Open the whiteboard.</p>
       </div>
       <button class="themebtn" id="theme">◐ Theme</button>
     </div>
     <nav class="nav">
-      <button id="navTest" class="on">Lesson&nbsp;10 Test</button>
-      <button id="navCourses">Math Crash Courses</button>
+      <button id="navHub" class="on">Lessons</button>
+      <button id="navCourses">Crash Courses</button>
+      <a class="navlink" href="whiteboard.html">✎ Whiteboard ↗</a>
     </nav>
   </header>
 
-  <!-- TEST VIEW -->
-  <div id="view-test">
+  <div id="view-hub">
+    <p class="intro">One test per lecture — progressive hints and full worked solutions on every question. Your progress is saved on this device.</p>
+    <div class="lgrid" id="lgrid"></div>
+  </div>
+
+  <div id="view-lesson" style="display:none">
+    <button class="backbtn" id="back">← All lessons</button>
+    <div class="lessonhead" id="lessonhead"></div>
     <div class="progress">
       <div class="track"><div class="fill" id="fill"></div></div>
-      <span class="ptext" id="ptext">0 / 4 marked understood</span>
+      <span class="ptext" id="ptext"></span>
     </div>
     <main id="app"></main>
   </div>
 
-  <!-- COURSES VIEW -->
   <div id="view-courses" style="display:none">
-    <p class="intro">Three building blocks power every question in this test. Read the refresher, then hit <b>New problem</b> and drill until it feels automatic — the numbers are randomized each time.</p>
+    <p class="intro">The building blocks behind the algebra. Read the refresher, then hit <b>New problem</b> and drill until it feels automatic — the numbers are randomized each time.</p>
     <div class="pills" id="pills"></div>
     <div id="course-body"></div>
   </div>
@@ -252,7 +296,7 @@ const V=t=>`<span class="var">${t}</span>`;
 const OP=t=>`<span class="op">${t}</span>`;
 const randInt=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=arr=>arr[Math.floor(Math.random()*arr.length)];
-const fmt=n=> n<0 ? "−"+Math.abs(n) : ""+n;      /* signed display */
+const fmt=n=> n<0 ? "−"+Math.abs(n) : ""+n;
 const par=n=> "("+fmt(n)+")";
 function parseNum(v){
   if(v==null)return NaN;
@@ -271,228 +315,803 @@ function compareCells(root, flatAns){
   });
   return ok;
 }
+/* state-space prompt block */
+function ss(A,B,C){return `<div class="eq">
+  <div class="eqline">${V("ẋ")}${OP("=")} ${A} ${V("x")} ${OP("+")} ${B} ${V("u")}</div>
+  <div class="eqline">${V("y")}${OP("=")} ${C} ${V("x")}</div></div>`;}
+const TF=t=>`<div class="eq"><div class="eqline tf">${t}</div></div>`;
 
-/* shared state-space matrices for prompts */
-const A12=mat([["−3","0"],["1","−2"]]);
-const Bvec=mat([["0"],["1"]]);
-const Cout=mat([["0","1"]]);
+/* ---- tiny block-diagram SVG kit ---- */
+const AH=`<marker id="ah" markerWidth="9" markerHeight="9" refX="7.5" refY="4" orient="auto"><path d="M0,0 L9,4 L0,8 z" fill="var(--ink)"/></marker>`;
+const svg=(w,h,body)=>`<svg class="dia" viewBox="0 0 ${w} ${h}" width="${w}" role="img"><defs>${AH}</defs>${body}</svg>`;
+const ar=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#ah)"/>`;
+const ln=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`;
+const box=(x,y,w,h,t)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="3"/><text x="${x+w/2}" y="${y+h/2}" text-anchor="middle" dominant-baseline="central">${t}</text>`;
+const sumc=(cx,cy)=>`<circle cx="${cx}" cy="${cy}" r="13"/><text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="central">Σ</text>`;
+const dot=(cx,cy)=>`<circle cx="${cx}" cy="${cy}" r="2.6" fill="var(--ink)" stroke="none"/>`;
+const sig=(x,y,t)=>`<text x="${x}" y="${y}" class="sig">${t}</text>`;
 
-/* ================= test questions ================= */
-const Q=[
-{
-  topic:"Controllability",title:"Is the system controllable?",
-  brush:["matmul","detrank"],
-  prompt:`<div class="eq">
-    <div class="eqline">${V("ẋ")}${OP("(t) =")} ${A12} ${V("x")}${OP("(t) +")} ${Bvec} ${V("u")}${OP("(t)")}</div>
-    <div class="eqline">${V("y")}${OP("(t) =")} ${Cout} ${V("x")}${OP("(t)")}</div></div>`,
-  hints:[
-    `Controllable iff the controllability matrix 𝒞 = [ B &nbsp; AB ] has <b>full rank</b> (= n = 2). Only <b>A</b> and <b>B</b> matter.`,
-    `Compute the second column <span class="var">AB</span>: multiply A by B = [0, 1]ᵀ.`,
-    `You get ${mat([["0"],["−2"]])}. Stack beside B → 𝒞 = ${mat([["0","0"],["1","−2"]])}. Is it invertible?`,
-    `The first row of 𝒞 is all zeros ⇒ det 𝒞 = 0 ⇒ rank &lt; 2.`
-  ],
-  solution:`<ol>
-    <li>Build 𝒞 = [ B &nbsp; AB ] (n = 2).</li>
-    <li><span class="var">AB</span> = ${A12}${mat([["0"],["1"]])} = ${mat([["(−3)(0)+(0)(1)"],["(1)(0)+(−2)(1)"]],true)} = ${mat([["0"],["−2"]])}.</li>
-    <li>𝒞 = ${mat([["0","0"],["1","−2"]])}, det 𝒞 = (0)(−2) − (0)(1) = <mark>0</mark>.</li>
-    <li>rank 𝒞 = 1 &lt; 2 ⇒ <b>not controllable</b>.</li></ol>
-    <p class="rule">A is lower-triangular, so <span class="var">ẋ₁ = −3x₁</span> has no <span class="var">u</span> — the −3 mode can't be driven.</p>
-    <div class="answer"><b>Not controllable</b> — the mode at λ = −3 is uncontrollable.</div>`
-},
-{
-  topic:"Observability",title:"Is the system observable?",
-  brush:["matmul","detrank"],
-  prompt:`<div class="eq">
-    <div class="eqline">${V("ẋ")}${OP("(t) =")} ${A12} ${V("x")}${OP("(t) +")} ${Bvec} ${V("u")}${OP("(t)")}</div>
-    <div class="eqline">${V("y")}${OP("(t) =")} ${Cout} ${V("x")}${OP("(t)")}</div></div>`,
-  hints:[
-    `Observable iff 𝒪 = ${mat([["C"],["CA"]],true)} has full rank (= 2). Only <b>A</b> and <b>C</b> matter.`,
-    `C = [0 &nbsp; 1]. Compute the row <span class="var">CA</span> = C·A.`,
-    `CA = [0 &nbsp; 1]${A12} = [1 &nbsp; −2]. Stack C over CA.`,
-    `𝒪 = ${mat([["0","1"],["1","−2"]],true)} — check its determinant.`
-  ],
-  solution:`<ol>
-    <li>Build 𝒪 = ${mat([["C"],["CA"]],true)}, C = [0 &nbsp; 1].</li>
-    <li><span class="var">CA</span> = [0 &nbsp; 1]${A12} = [1 &nbsp; −2].</li>
-    <li>𝒪 = ${mat([["0","1"],["1","−2"]],true)}, det 𝒪 = (0)(−2) − (1)(1) = <mark>−1</mark>.</li>
-    <li>det 𝒪 ≠ 0 ⇒ rank 2 ⇒ <b>observable</b>.</li></ol>
-    <p class="rule">Same A, B as Q1 — but the answer flips. Controllability and observability are independent.</p>
-    <div class="answer"><b>Observable</b> — det 𝒪 = −1 ≠ 0.</div>`
-},
-{
-  topic:"Observer Design",title:"Design an observer gain L for a pole at −5",
-  brush:["eig"],
-  prompt:`<div class="eq">
-    <div class="eqline">${V("ẋ")}${OP("(t) =")}${OP("−")}${V("x")}${OP("(t) +")}${V("u")}${OP("(t)")}</div>
-    <div class="eqline">${V("y")}${OP("(t) =")}${V("x")}${OP("(t)")}</div></div>
-    <p>Design an observer gain <span class="var">L</span> so the observer has an eigenvalue at <b>−5</b>.</p>`,
-  hints:[
-    `The estimation error obeys <span class="var">ė = (A − LC)e</span>. The observer poles are the eigenvalues of <span class="var">A − LC</span>.`,
-    `Everything is scalar: A = −1, C = 1, so the eigenvalue is <span class="var">A − LC = −1 − L</span>.`,
-    `Set −1 − L = −5 and solve for L.`
-  ],
-  solution:`<ol>
-    <li><span class="var">ė = (A − LC)e</span>; scalar eigenvalue = −1 − L.</li>
-    <li>Place at −5: −1 − L = −5.</li>
-    <li>−L = −4 ⇒ <mark>L = 4</mark>.</li>
-    <li>Check: A − LC = −1 − (4)(1) = −5 ✓ — error decays like <span class="var">e<sup>−5t</sup></span>.</li></ol>
-    <div class="answer"><b>L = 4</b>, giving observer dynamics <span class="var">ė = −5e</span>.</div>`
-},
-{
-  topic:"State Feedback",title:"Closed-loop eigenvalues under state feedback",
-  brush:["matmul","eig"],
-  prompt:`<div class="eq"><div class="eqline">${V("ẋ")}${OP("(t) =")} ${mat([["1","2"],["2","1"]])} ${V("x")}${OP("(t) +")} ${mat([["1"],["1"]])} ${V("u")}${OP("(t)")}</div></div>
-    <p>with state feedback</p>
-    <div class="eq"><div class="eqline">${V("u")}${OP("(t) =")} ${mat([["−2","−2"]])} ${V("x")}${OP("(t)")}</div></div>
-    <p>What are the eigenvalues of the closed-loop system?</p>`,
-  hints:[
-    `Substitute <span class="var">u = Kx</span> ⇒ <span class="var">ẋ = (A + BK)x</span>. Find A + BK first.`,
-    `<span class="var">BK</span> is an outer product (2×1 times 1×2 = 2×2): ${mat([["1"],["1"]])}${mat([["−2","−2"]])}.`,
-    `BK = ${mat([["−2","−2"],["−2","−2"]])}. Add entrywise to A.`,
-    `A + BK = ${mat([["−1","0"],["0","−1"]])} — diagonal, so read the eigenvalues off.`
-  ],
-  solution:`<ol>
-    <li><span class="var">u = Kx</span> ⇒ <span class="var">ẋ = (A + BK)x</span>, K = [−2 &nbsp; −2].</li>
-    <li>BK = ${mat([["1"],["1"]])}${mat([["−2","−2"]])} = ${mat([["−2","−2"],["−2","−2"]])}.</li>
-    <li>A + BK = ${mat([["1","2"],["2","1"]])} + ${mat([["−2","−2"],["−2","−2"]])} = ${mat([["−1","0"],["0","−1"]])}.</li>
-    <li>det(sI − (A+BK)) = (s+1)² ⇒ <mark>λ = −1, −1</mark>.</li></ol>
-    <p class="rule">Open-loop A has eigenvalues +3 and −1 (unstable); feedback moves both poles to −1.</p>
-    <div class="answer"><b>λ = −1 and λ = −1</b> — stable, with a repeated pole.</div>`
+/* a standard single-loop unity-feedback diagram */
+function loopDia(cLabel,gLabel){
+  return svg(430,120,
+    sig(4,50,"r")+ar(12,55,53,55)+
+    sumc(66,55)+`<text x="52" y="47">+</text><text x="52" y="76">−</text>`+
+    ar(80,55,120,55)+sig(96,48,"e")+
+    box(120,37,64,36,cLabel)+
+    ar(184,55,222,55)+sig(200,48,"u")+
+    box(222,37,60,36,gLabel)+
+    ar(282,55,415,55)+sig(405,48,"y")+
+    dot(345,55)+ln(345,55,345,98)+ln(345,98,66,98)+ar(66,98,66,68)
+  );
 }
-];
+/* state-space integrator realisation */
+const ssDia = svg(470,150,
+  sig(4,60,"u")+ar(12,65,44,65)+
+  box(44,47,36,36,"B")+ar(80,65,113,65)+
+  sumc(126,65)+`<text x="108" y="54">+</text>`+
+  ar(139,65,172,65)+
+  box(172,47,40,36,"∫")+
+  dot(260,65)+ln(212,65,300,65)+sig(248,58,"x")+
+  box(300,47,36,36,"C")+ar(336,65,362,65)+
+  sumc(376,65)+`<text x="358" y="54">+</text>`+
+  ar(389,65,458,65)+sig(449,58,"y")+
+  /* D feedforward (top) */
+  dot(25,65)+ln(25,65,25,22)+ln(25,22,150,22)+box(150,5,40,34,"D")+ln(190,22,376,22)+ar(376,22,376,52)+`<text x="382" y="40">+</text>`+
+  /* A feedback (bottom) */
+  ln(260,65,260,122)+ln(260,122,196,122)+box(156,105,40,34,"A")+ln(156,122,126,122)+ar(126,122,126,78)+`<text x="108" y="86">+</text>`
+);
 
+/* ================= crash-course names ================= */
 const COURSE_NAME={matmul:"Matrix multiplication",detrank:"Determinant & rank",eig:"Eigenvalues"};
 
-/* ================= render test ================= */
-const app=document.getElementById("app");
-const KEY="ctrl-l10-done";
-let done={};
-try{done=JSON.parse(localStorage.getItem(KEY))||{};}catch(e){done={};}
+/* ================= LESSONS ================= */
+const LESSONS=[
+{ n:1, title:"Linear Time-Invariant Systems", blurb:"State space, transfer functions, eigenvalues", questions:[
+  { topic:"State space & transfer function",
+    prompt:`${TF("z̈ − 2ż = −3z + u")}<p>with <span class="var">ż</span> as the output. Write it in state-space form, then give the transfer function from <span class="var">u</span> to the output.</p>`,
+    hints:[
+      `Choose states x₁ = z, x₂ = ż. Then ẋ₁ = x₂, and ẋ₂ = z̈ — so rearrange the ODE to isolate z̈.`,
+      `z̈ = 2ż − 3z + u = 2x₂ − 3x₁ + u. The output is y = ż = x₂.`,
+      `For the transfer function, Laplace the ODE with zero initial conditions: (s² − 2s + 3)Z = U. The output is ż, so Y = sZ.`
+    ],
+    solution:`<ol>
+      <li>States x₁ = z, x₂ = ż ⇒ ẋ₁ = x₂ and ẋ₂ = z̈ = 2x₂ − 3x₁ + u.</li>
+      <li>${ss(mat([["0","1"],["−3","2"]]),mat([["0"],["1"]]),mat([["0","1"]]))}(with D = 0, since y = x₂ = ż).</li>
+      <li>Transfer function: (s² − 2s + 3)Z = U ⇒ Z/U = 1/(s²−2s+3). Output ż ⇒ Y = sZ.</li></ol>
+      <div class="answer"><b>H(s) = s / (s² − 2s + 3).</b> &nbsp;(Note the +3 constant makes the poles s = 1 ± j√2 — an <i>unstable</i> pair, Re = +1.)</div>`,
+  },
+  { topic:"Transfer function → state space",
+    prompt:`${TF("H(s) = 1 / [ (s + 2)(s + 3) ]")}<p>Transform the system into state-space form.</p>`,
+    hints:[
+      `Multiply out the denominator: (s+2)(s+3) = s² + 5s + 6. The numerator is 1.`,
+      `For 1/(s² + a₁s + a₀), controllable canonical form is A = [[0,1],[−a₀,−a₁]], B = [0;1], C = [1 0].`
+    ],
+    solution:`<ol>
+      <li>Denominator = s² + 5s + 6 ⇒ a₁ = 5, a₀ = 6.</li>
+      <li>Controllable canonical form:</li></ol>
+      ${ss(mat([["0","1"],["−6","−5"]]),mat([["0"],["1"]]),mat([["1","0"]]))}
+      <div class="answer">Check: C(sI−A)⁻¹B = 1/(s²+5s+6) ✓. Poles at −2 and −3 (stable).</div>`,
+  },
+  { topic:"Laplace of a state-space model",
+    prompt:`${ss("A","B","C")}<p>Laplace-transform the model and give the transfer function from <span class="var">u</span> to <span class="var">y</span>.</p>`,
+    hints:[
+      `Laplace both sides with zero initial conditions: sX(s) = AX(s) + BU(s).`,
+      `Gather X: (sI − A)X = BU ⇒ X = (sI − A)⁻¹BU. Then y = Cx.`
+    ],
+    solution:`<ol>
+      <li>sX = AX + BU ⇒ (sI − A)X = BU ⇒ X = (sI − A)⁻¹BU.</li>
+      <li>Y = CX = C(sI − A)⁻¹B · U.</li></ol>
+      <div class="answer"><b>H(s) = C(sI − A)⁻¹B</b> &nbsp;(add <span class="var">+ D</span> if the output is y = Cx + Du).</div>`,
+  },
+  { topic:"Eigenvalues", brush:["eig"],
+    prompt:`<p>What are the eigenvalues of</p>${TF("")}<div class="eq"><div class="eqline">${mat([["−1","1"],["−1","−1"]])}</div></div>`,
+    hints:[
+      `Use λ² − (trace)λ + det = 0. Trace = −1 + (−1) = −2.`,
+      `det = (−1)(−1) − (1)(−1) = 1 + 1 = 2 ⇒ λ² + 2λ + 2 = 0.`
+    ],
+    solution:`<ol>
+      <li>trace = −2, det = (−1)(−1) − (1)(−1) = 2.</li>
+      <li>λ² + 2λ + 2 = 0 ⇒ λ = (−2 ± √(4−8))/2 = −1 ± j.</li></ol>
+      <div class="answer"><b>λ = −1 + j and λ = −1 − j.</b> Complex conjugate pair, Re = −1 &lt; 0 ⇒ stable, oscillatory.</div>`,
+  },
+]},
 
-Q.forEach((q,i)=>{
+{ n:2, title:"Stability & Performance Analysis", blurb:"Continuous & discrete stability, overshoot, damping", questions:[
+  { topic:"Continuous-time stability", brush:["eig"],
+    prompt:`<p>Autonomous system — is it stable?</p><div class="eq"><div class="eqline">${V("ẋ")}${OP("=")}${mat([["−1","2"],["−2","−1"]])}${V("x")}</div></div>`,
+    hints:[
+      `Continuous-time: stable ⇔ every eigenvalue has negative real part.`,
+      `trace = −2, det = (−1)(−1) − (2)(−2) = 1 + 4 = 5 ⇒ λ² + 2λ + 5 = 0.`
+    ],
+    solution:`<ol>
+      <li>λ² + 2λ + 5 = 0 ⇒ λ = (−2 ± √(4−20))/2 = −1 ± 2j.</li>
+      <li>Re(λ) = −1 &lt; 0 for both.</li></ol>
+      <div class="answer"><b>Asymptotically stable</b> — poles −1 ± 2j (a decaying oscillation).</div>`,
+  },
+  { topic:"Discrete-time stability", brush:["eig"],
+    prompt:`<p>Discrete system — is it stable?</p><div class="eq"><div class="eqline">${V("x")}<sub>k+1</sub>${OP("=")}${mat([["0.5","0.1"],["0","0.3"]])}${V("x")}<sub>k</sub></div></div>`,
+    hints:[
+      `Discrete-time: stable ⇔ every eigenvalue lies strictly inside the unit circle (|λ| &lt; 1).`,
+      `The matrix is upper-triangular, so its eigenvalues are just the diagonal entries.`
+    ],
+    solution:`<ol>
+      <li>Upper-triangular ⇒ eigenvalues = 0.5 and 0.3.</li>
+      <li>|0.5| &lt; 1 and |0.3| &lt; 1.</li></ol>
+      <div class="answer"><b>Stable</b> — both eigenvalues are inside the unit circle.</div>`,
+  },
+  { topic:"Overshoot from pole location",
+    prompt:`<p>Two systems' poles are plotted (a red pair and a black pair). Which pair gives the <b>larger overshoot</b>?</p>
+      <div class="fignote">See the pole plot in your Lecture 2 test — two conjugate pairs at the same height, one nearer the imaginary axis than the other.</div>`,
+    hints:[
+      `Overshoot is governed only by the damping ratio ζ = cos θ, where θ is the angle between the pole and the negative real axis. Smaller ζ ⇒ larger overshoot.`,
+      `Same imaginary part but smaller |real part| ⇒ larger angle θ ⇒ smaller ζ. The poles closer to the imaginary axis are the less-damped ones.`
+    ],
+    solution:`<ol>
+      <li>%OS depends on ζ = cos θ (angle from the negative real axis); lower ζ → more overshoot.</li>
+      <li>Both pairs share the same imaginary part, but the pair nearer the imaginary axis has a smaller real magnitude → larger θ → smaller ζ.</li></ol>
+      <div class="answer"><b>The pair closest to the imaginary axis</b> (the <b>red</b> poles in the figure) has the larger overshoot.</div>`,
+  },
+  { topic:"Impulse response from z-plane poles",
+    prompt:`<p>Sketch the impulse response of a discrete system whose poles sit as a complex-conjugate pair <b>on the unit circle</b> (upper-left / lower-left).</p>
+      <div class="fignote">See the z-plane figure in your Lecture 2 test.</div>`,
+    hints:[
+      `The magnitude of the pole sets growth/decay: |pole| &lt; 1 decays, &gt; 1 grows, = 1 stays constant.`,
+      `A complex pair gives oscillation; the pole angle sets the frequency (≈135° ⇒ only a couple of samples per cycle).`
+    ],
+    solution:`<ol>
+      <li>|pole| = 1 exactly ⇒ marginally stable ⇒ the response neither grows nor decays.</li>
+      <li>Complex pair ⇒ oscillatory; the large angle (~135°) ⇒ a fast, near-alternating oscillation.</li></ol>
+      <div class="answer"><b>A sustained, constant-amplitude oscillation</b> (undamped) — samples oscillate forever without settling.</div>`,
+  },
+  { topic:"Damping ratio",
+    prompt:`<p>What is the damping ratio of a system whose poles lie along a line 45° from the imaginary axis?</p>
+      <div class="fignote">See the pole figure (45° marked) in your Lecture 2 test.</div>`,
+    hints:[
+      `ζ = cos θ, where θ is the angle measured from the <i>negative real axis</i> to the pole.`,
+      `A line at 45° from the imaginary axis is also 45° from the negative real axis.`
+    ],
+    solution:`<ol><li>ζ = cos θ with θ = 45°.</li><li>cos 45° = √2 / 2.</li></ol>
+      <div class="answer"><b>ζ = cos 45° = √2/2 ≈ 0.707.</b></div>`,
+  },
+]},
+
+{ n:3, title:"Introduction to Control", blurb:"Closed-loop transfer functions, block diagrams, steady-state error", questions:[
+  { topic:"Closed-loop transfer function",
+    prompt:`<p>A gain <span class="var">K<sub>p</sub></span> drives a plant <span class="var">P(s)</span> with unity negative feedback. Write the closed-loop transfer function y/r.</p>${loopDia("Kₚ","Plant")}`,
+    hints:[
+      `The forward path (r's error to y) is Kₚ·P(s).`,
+      `Unity negative feedback ⇒ T = forward / (1 + forward loop).`
+    ],
+    solution:`<ol><li>Forward path = KₚP; loop gain = KₚP.</li>
+      <li>T = forward / (1 + loop).</li></ol>
+      <div class="answer"><b>y/r = KₚP(s) / (1 + KₚP(s)).</b></div>`,
+  },
+  { topic:"Block diagram of a state-space model",
+    prompt:`<p>Draw a block diagram of</p>${ss("A","B","C")}<p>(with a feedthrough term, y = Cx + Du).</p>`,
+    hints:[
+      `The core is an integrator: it turns ẋ into x. Feed Bu into a summing junction, integrate to get x.`,
+      `x feeds forward through C to the output, and back through A into the summing junction. D feeds u straight to the output sum.`
+    ],
+    solution:`<p>u → B into a summing junction → integrator ∫ → state x. The state returns through A to the same junction (that realises ẋ = Ax + Bu), passes through C to the output, and D feeds u directly to the output sum (y = Cx + Du):</p>
+      ${ssDia}
+      <div class="answer">Key idea: the <b>integrator</b> is the memory element; <b>A</b> is the internal feedback, <b>B</b> the input map, <b>C</b> the output map, <b>D</b> the direct feedthrough.</div>`,
+  },
+  { topic:"Steady-state error to a ramp",
+    prompt:`<p>For the closed-loop system</p>${TF("T(s) = y(s)/r(s) = s / (s + 2)")}<p>what is the steady-state error to a <b>ramp</b> input?</p>`,
+    hints:[
+      `Error e = r − y, so E(s) = (1 − T(s))R(s). Compute 1 − T.`,
+      `1 − T = (s+2−s)/(s+2) = 2/(s+2). Ramp ⇒ R(s) = 1/s². Use the final value theorem e_ss = lim_{s→0} sE(s).`
+    ],
+    solution:`<ol>
+      <li>1 − T = 2/(s+2). Ramp: R = 1/s².</li>
+      <li>e_ss = lim_{s→0} s · (2/(s+2)) · (1/s²) = lim_{s→0} 2/[s(s+2)] → ∞.</li></ol>
+      <div class="answer"><b>Infinite steady-state error</b> — the system can't track a ramp. (In fact T(0) = 0, so it can't even track a step: e_ss to a step = 1.)</div>`,
+  },
+  { topic:"2-DOF block diagram",
+    prompt:`<p>Draw a block diagram of a plant <span class="var">G(s)</span> with a feedback controller <span class="var">K(s)</span> and feedforward <span class="var">F(s)</span>.</p>`,
+    hints:[
+      `Feedforward acts directly on the reference; feedback acts on the measured output.`,
+      `A common form: u = F(s)·r − K(s)·y, i.e. the plant input is the sum of a feedforward term and a feedback term.`
+    ],
+    solution:`<p>Reference r splits two ways: through the feedforward F(s), and into the feedback path. The plant input is the feedforward output minus the feedback of y through K(s):</p>
+      <div class="eq"><div class="eqline">${sig(0,0,"")}u = F(s)·r − K(s)·y, &nbsp; y = G(s)·u</div></div>
+      ${svg(440,120,
+        sig(4,40,"r")+dot(30,55)+ar(12,55,80,55)+
+        box(80,20,60,32,"F(s)")+
+        ar(140,36,190,36)+
+        sumc(204,36)+`<text x="190" y="28">+</text><text x="190" y="55">−</text>`+
+        ar(218,36,258,36)+sig(236,29,"u")+
+        box(258,18,56,36,"G(s)")+
+        ar(314,36,424,36)+sig(414,29,"y")+
+        dot(360,36)+ln(360,36,360,95)+ln(360,95,150,95)+box(150,79,60,32,"K(s)")+ln(150,95,30,95)+ln(30,95,30,55)+ar(30,55,196,42)
+      )}
+      <div class="answer">Two degrees of freedom: <b>F(s)</b> shapes reference tracking, <b>K(s)</b> independently shapes feedback (stability &amp; disturbance rejection).</div>`,
+  },
+]},
+
+{ n:4, title:"Design of PID Controllers", blurb:"PID structure, P-control closed loops, feedforward, Ziegler–Nichols", questions:[
+  { topic:"Insert a PID controller",
+    prompt:`<p>Add a PID controller to the loop (between the error e and the plant input u).</p>${loopDia("?","Plant")}`,
+    hints:[
+      `A PID controller is C(s) = Kp + Ki/s + Kd·s — proportional + integral + derivative acting on the error.`,
+      `It sits in the forward path: e → C(s) → u → Plant.`
+    ],
+    solution:`<p>Place C(s) = Kp + Ki/s + Kd·s in the forward path, driven by the error:</p>
+      ${loopDia("Kp+Ki/s+Kd s","Plant")}
+      <div class="answer">u(t) = Kp·e + Ki·∫e dt + Kd·(de/dt). The three terms handle present error, accumulated error, and rate of change.</div>`,
+  },
+  { topic:"Closed loop with P-control",
+    prompt:`<p>Derive the closed-loop transfer function of</p>${TF("G(s) = 1 / (τs + 1)")}<p>under P-control with gain <span class="var">K<sub>p</sub></span> (unity feedback).</p>`,
+    hints:[
+      `T = KpG / (1 + KpG). Substitute G = 1/(τs+1).`,
+      `Multiply top and bottom by (τs+1) to clear the fraction.`
+    ],
+    solution:`<ol>
+      <li>T = [Kp/(τs+1)] / [1 + Kp/(τs+1)] = Kp / (τs + 1 + Kp).</li>
+      <li>Rewrite as a standard first-order form:</li></ol>
+      ${TF("T(s) = [ Kp/(1+Kp) ] / [ (τ/(1+Kp)) s + 1 ]")}
+      <div class="answer">DC gain = Kp/(1+Kp) (&lt; 1 ⇒ leftover steady-state error), time constant = τ/(1+Kp) (faster as Kp grows).</div>`,
+  },
+  { topic:"Feedforward to kill steady-state error",
+    prompt:`<p>Plant</p>${TF("G(s) = 1 / (s² + 2s + 3)")}<p>is under P-control with gain <span class="var">K<sub>p</sub></span>. Add a feedforward on r and choose it so the steady-state error is eliminated.</p>`,
+    hints:[
+      `At steady state the plant's DC gain matters: G(0) = 1/3.`,
+      `Add a feedforward gain F on the reference into the plant input: u = Kp·e + F·r. For y = r with e = 0 you need G(0)·F = 1.`
+    ],
+    solution:`<ol>
+      <li>DC gain G(0) = 1/(0+0+3) = 1/3.</li>
+      <li>With u = Kp·e + F·r, steady state gives y = G(0)·F·r. For y = r with zero error, G(0)·F = 1.</li></ol>
+      <div class="answer"><b>F = 1/G(0) = 3.</b> (Generally the ideal feedforward is F = 1/G(0).)</div>`,
+  },
+  { topic:"Ziegler–Nichols (open-loop) for PI",
+    prompt:`<p>From the open-loop step response, use the Ziegler–Nichols reaction-curve method to get initial PI gains.</p>
+      <div class="fignote">See the step-response plot in your Lecture 4 test (an S-curve settling near 0.125).</div>`,
+    hints:[
+      `Read three things off the S-curve: the process gain K (final value ÷ step size), the apparent dead time L, and the time constant T (from the tangent at the inflection point).`,
+      `Z-N reaction-curve, PI: Kp = 0.9·T/(K·L), Ti = L/0.3, Ki = Kp/Ti.`
+    ],
+    solution:`<ol>
+      <li>Identify K (steady value for a unit step ≈ 0.125), dead time L, and time constant T from the inflection tangent.</li>
+      <li>Apply the Z-N reaction-curve rules for PI: <b>Kp = 0.9·T/(K·L)</b>, <b>Ti = L/0.3</b>, then <b>Ki = Kp/Ti</b>.</li>
+      <li>Plug in your readings, e.g. K ≈ 0.125, T ≈ 0.6 s, L ≈ 0.1 s ⇒ Kp ≈ 0.9·0.6/(0.125·0.1) ≈ 43, Ti ≈ 0.33 s, Ki ≈ 130.</li></ol>
+      <div class="answer">The <b>method</b> is what matters — plug in your own L and T. Note: this response has almost no dead time (small L), which makes Z-N gains large and only a rough starting point to tune down from.</div>`,
+  },
+]},
+
+{ n:5, title:"Root Locus", blurb:"Sketching loci, parameter loci, critical damping, disturbance transfer", questions:[
+  { topic:"Sketch a root locus",
+    prompt:`<p>Sketch the root locus for proportional control of</p>${TF("G(s) = 1 / [ (s + 10)(s − 1) ]")}`,
+    hints:[
+      `Open-loop poles at −10 and +1 (one unstable), no finite zeros. Real-axis locus lies where an odd number of poles/zeros are to the right.`,
+      `2 poles, 0 zeros ⇒ 2 asymptotes at ±90°, centroid σ = (−10 + 1)/2 = −4.5. Find the breakaway from d/ds[(s+10)(s−1)] = 0.`,
+      `jω-crossing: from s² + 9s + (K−10) = 0, the locus crosses the imaginary axis (s = 0) when K = 10.`
+    ],
+    solution:`<ol>
+      <li>Poles −10, +1; no zeros. Real-axis segment: between −10 and +1.</li>
+      <li>Asymptotes ±90°, centroid −4.5. Breakaway: 2s + 9 = 0 ⇒ s = −4.5. Branches leave the axis there and run vertically (Re = −4.5).</li>
+      <li>Imaginary-axis crossing at s = 0 when K = 10.</li></ol>
+      <div class="answer">As K increases the +1 pole moves left; the two poles meet at −4.5 and split vertically. <b>Closed loop is stable for K &gt; 10</b> (and poles become complex, Re = −4.5, for K &gt; 30.25).</div>`,
+  },
+  { topic:"Parameter root locus (varying a)",
+    prompt:`<p>System G(s) = 1/(as² + bs + c) under P-control Kp. Rewrite the characteristic equation so you can analyse varying <b>a</b> from 0 to ∞.</p>`,
+    hints:[
+      `Characteristic equation: 1 + KpG = 0 ⇒ as² + bs + c + Kp = 0.`,
+      `Isolate the parameter a: put the terms with a as the "gain × L(s)" and divide through.`
+    ],
+    solution:`<ol>
+      <li>1 + KpG = 0 ⇒ as² + bs + c + Kp = 0.</li>
+      <li>Group: a·s² + (bs + c + Kp) = 0, then divide by (bs + c + Kp):</li></ol>
+      ${TF("1 + a · s² / (bs + c + Kp) = 0")}
+      <div class="answer">This is a root locus in the parameter <b>a</b> with equivalent open-loop L(s) = s²/(bs + c + Kp).</div>`,
+  },
+  { topic:"Choose k for critical damping",
+    prompt:`<p>From the given root locus, choose the value of <span class="var">k</span> that makes the system critically damped.</p>
+      <div class="fignote">See the root-locus plot in your Lecture 5 test (markers at k = 1, 5, 10).</div>`,
+    hints:[
+      `Critically damped = a repeated real pole = the breakaway point, where two branches meet on the real axis just before becoming complex.`,
+      `Read the k value at that junction on the plot.`
+    ],
+    solution:`<ol>
+      <li>Critical damping ⇔ double real pole ⇔ the breakaway point on the real axis.</li>
+      <li>On the plot the branches meet at the k = 5 marker.</li></ol>
+      <div class="answer"><b>k ≈ 5</b> — the gain at the breakaway point (below it: two real poles = overdamped; above it: complex = underdamped).</div>`,
+  },
+  { topic:"Disturbance transfer function d → u",
+    prompt:`<p>For the loop below (controller K, plant G, input disturbance d, unity feedback), write the transfer function from <span class="var">d</span> to <span class="var">u</span> assuming r = 0.</p>
+      ${svg(430,120,
+        sig(4,40,"r")+ar(12,45,40,45)+sumc(54,45)+`<text x="40" y="37">+</text><text x="40" y="66">−</text>`+
+        ar(68,45,104,45)+sig(84,38,"e")+box(104,27,44,36,"K")+ar(148,45,196,45)+sig(170,38,"u")+
+        sig(214,16,"d")+ln(220,22,220,32)+ar(220,32,220,-0+38)+
+        sumc(220,45)+`<text x="234" y="37">+</text>`+
+        ar(234,45,262,45)+box(262,27,44,36,"G")+ar(306,45,418,45)+sig(408,38,"y")+
+        dot(345,45)+ln(345,45,345,98)+ln(345,98,54,98)+ar(54,98,54,58)
+      )}`,
+    hints:[
+      `With r = 0 the error is e = −y, so the controller output is u = K·e = −K·y.`,
+      `The plant sees u + d: y = G(u + d). Substitute and solve for u/d.`
+    ],
+    solution:`<ol>
+      <li>r = 0 ⇒ e = −y ⇒ u = −Ky. Plant: y = G(u + d).</li>
+      <li>u = −KG(u + d) ⇒ u(1 + KG) = −KG·d.</li></ol>
+      <div class="answer"><b>u/d = −KG / (1 + KG).</b></div>`,
+  },
+]},
+
+{ n:6, title:"The Nyquist Stability Criterion", blurb:"Bode sketching, gain limits, Nyquist stability, noise transfer", questions:[
+  { topic:"Sketch a Bode plot",
+    prompt:`<p>Sketch the Bode plot of</p>${TF("G(s) = (s + 10) / [ (s + 0.1)(s + 1000) ]")}`,
+    hints:[
+      `DC gain = 10/(0.1·1000) = 0.1 ⇒ −20 dB. Corner frequencies: pole at 0.1, zero at 10, pole at 1000.`,
+      `Each pole bends magnitude down −20 dB/dec and adds −90° of phase; each zero bends it up +20 dB/dec and adds +90°.`
+    ],
+    solution:`<ol>
+      <li>Start flat at −20 dB (up to ω = 0.1).</li>
+      <li>Pole 0.1: slope −20 dB/dec (0.1→10). Zero 10: back to flat (10→1000). Pole 1000: −20 dB/dec beyond.</li>
+      <li>Phase: 0° → −90° (after pole 0.1) → back toward 0° (after zero 10) → −90° (after pole 1000).</li></ol>
+      <div class="answer">Two flat regions joined by a single −20 dB/dec slope between 0.1 and 10 rad/s, dropping again after 1000.</div>`,
+  },
+  { topic:"Max gain before instability",
+    prompt:`<p>From the Bode plot of G(s), how large can the proportional gain be before the closed loop goes unstable?</p>
+      <div class="fignote">See the Bode plot in your Lecture 6 test.</div>`,
+    hints:[
+      `Instability happens when the loop gain reaches 1 (0 dB) at the frequency where the phase is −180°.`,
+      `Find ω where phase = −180° (the phase-crossover). Read the magnitude |G| there. Kp,max = 1/|G(jω₁₈₀)|.`
+    ],
+    solution:`<ol>
+      <li>Locate ω₁₈₀ where phase = −180°.</li>
+      <li>Read the gain there. In dB the limit is Kp,max(dB) = −(that magnitude); in linear units Kp,max = 1/|G(jω₁₈₀)|.</li></ol>
+      <div class="answer">Kp,max = 1/|G(jω₁₈₀)| — the gain margin. (Read |G| at the −180° crossing off your plot; that's the exact multiplier that pushes the point to −1.)</div>`,
+  },
+  { topic:"Nyquist stability check",
+    prompt:`<p>For the loop gain</p>${TF("L(s) = 10 (s + 3) / [ (s + 2)(s − 2) ]")}<p>is the closed-loop system stable?</p>
+      <div class="fignote">A Nyquist plot is given in your Lecture 6 test — but you can also settle it exactly.</div>`,
+    hints:[
+      `L has a pole at s = +2 in the right half-plane, so P = 1. Nyquist: Z = N + P, and stability needs Z = 0.`,
+      `You can also just form 1 + L = 0 and find the closed-loop poles directly.`
+    ],
+    solution:`<ol>
+      <li>1 + L = 0 ⇒ (s+2)(s−2) + 10(s+3) = 0 ⇒ s² + 10s + 26 = 0.</li>
+      <li>Roots s = (−10 ± √(100−104))/2 = −5 ± j.</li></ol>
+      <div class="answer"><b>Yes — stable.</b> Both closed-loop poles are −5 ± j (Re &lt; 0). On the Nyquist plot this shows up as exactly one <b>counter-clockwise</b> encirclement of −1 (N = −1), cancelling the one RHP open-loop pole (P = 1) so Z = 0.</div>`,
+  },
+  { topic:"Noise transfer function v → u",
+    prompt:`<p>For the loop below (controller K, plant G, measurement noise v added at the output), write the transfer function from <span class="var">v</span> to <span class="var">u</span> assuming r = 0.</p>
+      ${svg(450,120,
+        sig(4,40,"r")+ar(12,45,40,45)+sumc(54,45)+`<text x="40" y="37">+</text><text x="40" y="66">−</text>`+
+        ar(68,45,104,45)+sig(84,38,"e")+box(104,27,44,36,"K")+ar(148,45,182,45)+sig(164,38,"u")+
+        box(182,27,44,36,"G")+ar(226,45,300,45)+sig(250,38,"y")+
+        sig(316,16,"v")+ln(322,22,322,32)+ar(322,32,322,38)+
+        sumc(322,45)+`<text x="336" y="37">+</text>`+
+        ar(336,45,440,45)+sig(410,38,"yₘ")+
+        dot(322,45)+ln(322,80,322,58)+ln(54,80,322,80)+ar(54,80,54,58)
+      )}`,
+    hints:[
+      `The measured signal is yₘ = y + v, and the feedback uses yₘ. With r = 0, e = −yₘ.`,
+      `u = K·e = −K·yₘ = −K(y + v), and y = G·u.`
+    ],
+    solution:`<ol>
+      <li>yₘ = y + v = Gu + v; e = −yₘ; u = −K·yₘ.</li>
+      <li>u = −K(Gu + v) ⇒ u(1 + KG) = −Kv.</li></ol>
+      <div class="answer"><b>u/v = −K / (1 + KG).</b></div>`,
+  },
+]},
+
+{ n:7, title:"Dynamic Compensators & Stability Margins", blurb:"Bode sketching, gain/phase margins on Bode & Nyquist", questions:[
+  { topic:"Sketch a Bode plot",
+    prompt:`<p>Sketch the Bode plot of</p>${TF("G(s) = 1 / [ s (s + 0.1)(s + 1000) ]")}`,
+    hints:[
+      `The free integrator 1/s starts the magnitude at −20 dB/dec and fixes the phase at −90° at low frequency.`,
+      `Each pole adds another −20 dB/dec and −90°.`
+    ],
+    solution:`<ol>
+      <li>Low frequency: −20 dB/dec slope, phase −90° (the integrator).</li>
+      <li>Pole 0.1 ⇒ −40 dB/dec, phase → −180°. Pole 1000 ⇒ −60 dB/dec, phase → −270°.</li></ol>
+      <div class="answer">Monotonic roll-off: −20 → −40 → −60 dB/dec at the corners 0.1 and 1000; phase sweeps −90° → −180° → −270°.</div>`,
+  },
+  { topic:"Read gain & phase margins (Bode)",
+    prompt:`<p>On the given Bode plot, indicate where the gain and phase margins are read, and determine their values.</p>
+      <div class="fignote">See the Bode plot in your Lecture 7 test.</div>`,
+    hints:[
+      `Phase margin is read at the gain-crossover ω_gc (where |G| = 0 dB). Gain margin is read at the phase-crossover ω_pc (where phase = −180°).`,
+      `PM = 180° + phase(ω_gc). GM = 0 dB − |G(ω_pc)| dB (how far the magnitude sits below 0 dB at −180°).`
+    ],
+    solution:`<ol>
+      <li><b>PM</b>: at ω_gc (|G| = 0 dB), read the phase; PM = 180° + phase(ω_gc).</li>
+      <li><b>GM</b>: at ω_pc (phase = −180°), read the magnitude; GM = −|G(ω_pc)| in dB.</li></ol>
+      <div class="answer">Both positive ⇒ stable with margin. Read the two crossover frequencies off your plot and evaluate — GM is the vertical gap to 0 dB at −180°, PM is the vertical gap to −180° at 0 dB.</div>`,
+  },
+  { topic:"Read gain & phase margins (Nyquist)",
+    prompt:`<p>Indicate how to read the gain and phase margins from a Nyquist plot of K(s)G(s).</p>
+      <div class="fignote">See the Nyquist plot in your Lecture 7 test.</div>`,
+    hints:[
+      `Both margins are measured relative to the critical point −1.`,
+      `Gain margin: where the curve crosses the negative real axis. Phase margin: where the curve crosses the unit circle.`
+    ],
+    solution:`<ol>
+      <li><b>Gain margin</b>: find where the locus crosses the negative real axis, at −a (0 &lt; a &lt; 1). GM = 1/a — the factor the gain can grow before that crossing hits −1.</li>
+      <li><b>Phase margin</b>: find where the locus crosses the unit circle (|KG| = 1). PM = the angle from the negative real axis to that point.</li></ol>
+      <div class="answer">GM lives on the negative-real-axis crossing (distance to −1); PM lives on the unit-circle crossing (angle to −1).</div>`,
+  },
+]},
+
+{ n:8, title:"Implementation", blurb:"Anti-windup, controller discretisation, discrete root locus", questions:[
+  { topic:"PI with anti-windup (back-calculation)",
+    prompt:`<p>Complete the loop with a PI controller that includes <b>anti-windup by back-calculation</b>.</p>${loopDia("?","Plant")}`,
+    hints:[
+      `PI: u = Kp·e + Ki·∫e. Add a saturation (actuator limit) on the controller output.`,
+      `Back-calculation: compute (u_sat − u) and feed it, scaled by 1/Tt, back into the integrator's input — so when the actuator saturates, the integrator stops winding up.`
+    ],
+    solution:`<ol>
+      <li>Proportional path Kp·e and integral path Ki·∫e sum to u; a saturation block gives u_sat (the real actuator command).</li>
+      <li>Form the difference (u_sat − u) and add it, multiplied by 1/Tt, to the integrator input.</li></ol>
+      <div class="answer">When u_sat = u (not saturated) the correction is zero and it behaves as a normal PI. When saturated, the negative (u_sat − u) bleeds the integrator down so it can't wind up — the output recovers quickly once the error reverses.</div>`,
+  },
+  { topic:"Discretise a controller",
+    prompt:`<p>Given</p>${TF("K(s) = 37 + 42 s")}<p>find the discrete controller K(z).</p>`,
+    hints:[
+      `This is a PD controller: a constant 37 plus a derivative term 42·s (no integrator).`,
+      `Replace s with a discrete approximation. Backward Euler: s → (z−1)/(T·z), where T is the sample time.`
+    ],
+    solution:`<ol>
+      <li>Constant term stays 37; approximate the derivative s.</li>
+      <li>Backward Euler s → (z−1)/(Tz): K(z) = 37 + 42(z−1)/(Tz).</li></ol>
+      ${TF("K(z) = [ (37T + 42) z − 42 ] / (T z)")}
+      <div class="answer">With T = sample time. (Forward Euler s→(z−1)/T gives K(z) = 37 + (42/T)(z−1); Tustin s→(2/T)(z−1)/(z+1) gives 37 + (84/T)(z−1)/(z+1).) No integrator ⇒ no windup concern here.</div>`,
+  },
+  { topic:"Damping & natural frequency on a discrete root locus",
+    prompt:`<p>On the discrete root locus, indicate where the system has damping ζ ≥ 0.7 and the largest possible undamped natural frequency ω<sub>n</sub>.</p>
+      <div class="fignote">See the z-plane root locus (with ζ and ωnT grid) in your Lecture 8 test.</div>`,
+    hints:[
+      `In the z-plane the spiral grid lines are constant-ζ and the arcs are constant-ωnT. Higher ζ is toward the positive real axis.`,
+      `You want the point on the locus that stays inside ζ ≥ 0.7 while sitting on the highest ωnT arc.`
+    ],
+    solution:`<ol>
+      <li>ζ ≥ 0.7 ⇒ the region between the ζ = 0.7 spiral and the positive real axis (the more-damped side).</li>
+      <li>Largest ωn ⇒ walk along the locus, staying within ζ ≥ 0.7, to the point touching the highest constant-ωnT arc.</li></ol>
+      <div class="answer">Mark the intersection of the locus with the ζ = 0.7 spiral that also lies on the largest reachable ωnT circle — that's the fastest response you can get while keeping ζ ≥ 0.7.</div>`,
+  },
+]},
+
+{ n:9, title:"Controllability & State-Feedback Design", custom:true,
+  blurb:"Lesson 9 was an exercise set — here's a matching test (no MATLAB)", questions:[
+  { topic:"Controllability (triangular)", brush:["matmul","detrank"],
+    prompt:`<p>Is this system controllable?</p>${ss(mat([["−1","2"],["0","−3"]]),mat([["1"],["0"]]),mat([["1","0"]]))}`,
+    hints:[
+      `Build 𝒞 = [ B  AB ]. Only A and B matter.`,
+      `AB = [[−1,2],[0,−3]]·[1,0]ᵀ = [−1, 0]ᵀ.`
+    ],
+    solution:`<ol>
+      <li>B = [1;0], AB = ${mat([["−1"],["0"]])} ⇒ 𝒞 = ${mat([["1","−1"],["0","0"]])}.</li>
+      <li>det 𝒞 = (1)(0) − (−1)(0) = 0 ⇒ rank 1.</li></ol>
+      <div class="answer"><b>Not controllable.</b> The second state obeys ẋ₂ = −3x₂ with no input — it can't be steered.</div>`,
+  },
+  { topic:"Controllability (diagonal)", brush:["matmul","detrank"],
+    prompt:`<p>Is this system controllable?</p>${ss(mat([["−1","0"],["0","−2"]]),mat([["1"],["1"]]),mat([["1","0"]]))}`,
+    hints:[
+      `𝒞 = [ B  AB ], with B = [1;1].`,
+      `AB = [[−1,0],[0,−2]]·[1,1]ᵀ = [−1, −2]ᵀ.`
+    ],
+    solution:`<ol>
+      <li>𝒞 = ${mat([["1","−1"],["1","−2"]])}, det = (1)(−2) − (−1)(1) = −1 ≠ 0.</li></ol>
+      <div class="answer"><b>Controllable.</b> Diagonal with <i>distinct</i> eigenvalues (−1, −2) and both B-entries non-zero. (If the eigenvalues were equal — e.g. both −1 — 𝒞 would be singular and it would <i>not</i> be controllable.)</div>`,
+  },
+  { topic:"Pole placement — double integrator", brush:["eig","matmul"],
+    prompt:`<p>For</p>${ss(mat([["0","1"],["0","0"]]),mat([["0"],["1"]]),mat([["1","0"]]))}<p>find state feedback u = Fx = [f₁ f₂]x so the closed-loop poles are −2 and −3.</p>`,
+    hints:[
+      `Desired characteristic polynomial: (s+2)(s+3) = s² + 5s + 6.`,
+      `A + BF = [[0,1],[f₁, f₂]]; its char. poly is s² − f₂·s − f₁. Match coefficients.`
+    ],
+    solution:`<ol>
+      <li>A + BF = ${mat([["0","1"],["f₁","f₂"]],true)} ⇒ char. poly s² − f₂ s − f₁.</li>
+      <li>Match s² + 5s + 6: −f₂ = 5 ⇒ f₂ = −5; −f₁ = 6 ⇒ f₁ = −6.</li></ol>
+      <div class="answer"><b>F = [ −6  −5 ].</b> Check: A+BF = [[0,1],[−6,−5]] ⇒ s²+5s+6 = (s+2)(s+3) ✓.</div>`,
+  },
+  { topic:"Pole placement — complex targets", brush:["eig","matmul"],
+    prompt:`<p>For</p>${ss(mat([["0","1"],["−2","−3"]]),mat([["0"],["1"]]),mat([["0","1"]]))}<p>find F = [f₁ f₂] so the closed-loop poles are −2 ± 2j (char. poly s² + 4s + 8).</p>`,
+    hints:[
+      `A + BF = [[0,1],[−2+f₁, −3+f₂]].`,
+      `Its char. poly is s² + (3−f₂)s + (2−f₁). Match to s² + 4s + 8.`
+    ],
+    solution:`<ol>
+      <li>A + BF = ${mat([["0","1"],["−2+f₁","−3+f₂"]],true)} ⇒ char. poly s² + (3−f₂)s + (2−f₁).</li>
+      <li>Match s² + 4s + 8: 3 − f₂ = 4 ⇒ f₂ = −1; 2 − f₁ = 8 ⇒ f₁ = −6.</li></ol>
+      <div class="answer"><b>F = [ −6  −1 ].</b> Check: A+BF = [[0,1],[−8,−4]] ⇒ s²+4s+8 ⇒ −2 ± 2j ✓.</div>`,
+  },
+]},
+
+{ n:10, title:"Observability, Observers & Observer-Based Control", blurb:"Controllability/observability tests, observer gain, state feedback", questions:[
+  { topic:"Controllability", brush:["matmul","detrank"],
+    prompt:`${ss(mat([["−3","0"],["1","−2"]]),mat([["0"],["1"]]),mat([["0","1"]]))}<p>Is the system controllable?</p>`,
+    hints:[
+      `Controllable ⇔ 𝒞 = [ B  AB ] has full rank (= 2). Only A and B matter.`,
+      `Compute AB = A·[0,1]ᵀ.`,
+      `𝒞 = ${mat([["0","0"],["1","−2"]])} — its first row is all zeros.`
+    ],
+    solution:`<ol>
+      <li>AB = ${mat([["0"],["−2"]])} ⇒ 𝒞 = ${mat([["0","0"],["1","−2"]])}, det = 0.</li>
+      <li>rank 1 &lt; 2.</li></ol>
+      <div class="answer"><b>Not controllable</b> — the mode at λ = −3 gets no input.</div>`,
+  },
+  { topic:"Observability", brush:["matmul","detrank"],
+    prompt:`${ss(mat([["−3","0"],["1","−2"]]),mat([["0"],["1"]]),mat([["0","1"]]))}<p>Is the system observable?</p>`,
+    hints:[
+      `Observable ⇔ 𝒪 = [C; CA] has full rank. Only A and C matter.`,
+      `C = [0 1], so CA = C·A = [1 −2].`
+    ],
+    solution:`<ol>
+      <li>CA = [1 −2] ⇒ 𝒪 = ${mat([["0","1"],["1","−2"]],true)}, det = −1 ≠ 0.</li></ol>
+      <div class="answer"><b>Observable.</b> Same A, B as the previous question — yet observability holds. The two properties are independent.</div>`,
+  },
+  { topic:"Observer gain", brush:["eig"],
+    prompt:`${TF("ẋ = −x + u, &nbsp; y = x")}<p>Design an observer gain <span class="var">L</span> so the observer has an eigenvalue at −5.</p>`,
+    hints:[
+      `Observer error: ė = (A − LC)e. Its eigenvalues are the observer poles.`,
+      `Scalar case A = −1, C = 1 ⇒ eigenvalue = −1 − L. Set it to −5.`
+    ],
+    solution:`<ol>
+      <li>−1 − L = −5 ⇒ L = 4.</li></ol>
+      <div class="answer"><b>L = 4</b>, giving ė = −5e (error decays like e⁻⁵ᵗ).</div>`,
+  },
+  { topic:"Closed-loop eigenvalues", brush:["matmul","eig"],
+    prompt:`${ss(mat([["1","2"],["2","1"]]),mat([["1"],["1"]]),"C")}<p>with state feedback u = [−2 −2]x. What are the closed-loop eigenvalues?</p>`,
+    hints:[
+      `Closed loop: ẋ = (A + BK)x. Find A + BK.`,
+      `BK = [1;1][−2 −2] = [[−2,−2],[−2,−2]].`
+    ],
+    solution:`<ol>
+      <li>A + BK = ${mat([["1","2"],["2","1"]])} + ${mat([["−2","−2"],["−2","−2"]])} = ${mat([["−1","0"],["0","−1"]])}.</li></ol>
+      <div class="answer"><b>λ = −1, −1.</b> Feedback moves the open-loop poles (+3, −1) both to −1 — now stable.</div>`,
+  },
+]},
+
+{ n:11, title:"Integral Control", blurb:"Augmented integral state, observer+integral, ctrb/obsv, separation", questions:[
+  { topic:"Augment with an integral state",
+    prompt:`<p>Complete the model so the integral state satisfies x<sub>I</sub>(t) = ∫₀ᵗ (y − r) dτ.</p>
+      <div class="eq"><div class="eqline">${mat([["ẋ"],["ẋ_I"]],true)} ${OP("=")} ${mat([["A","0"],["?","?"]],true)}${mat([["x"],["x_I"]],true)} ${OP("+")} ${mat([["?"],["?"]],true)}${V("r")}</div>
+      <div class="eqline">${V("y")} ${OP("=")} ${mat([["C","0"]],true)}${mat([["x"],["x_I"]],true)}</div></div>`,
+    hints:[
+      `Differentiate the integral: ẋ_I = y − r. And y = Cx.`,
+      `So ẋ_I = Cx − r: the bottom row of the A-block is [C 0], and r enters x_I with coefficient −1.`
+    ],
+    solution:`<ol>
+      <li>ẋ_I = y − r = Cx − r.</li>
+      <li>Bottom row of the state matrix = [C  0]; the r-input vector = [0; −1]. (The control enters via [B; 0]·u.)</li></ol>
+      <div class="eq"><div class="eqline">${mat([["ẋ"],["ẋ_I"]],true)} ${OP("=")} ${mat([["A","0"],["C","0"]],true)}${mat([["x"],["x_I"]],true)} ${OP("+")} ${mat([["B"],["0"]],true)}${V("u")} ${OP("+")} ${mat([["0"],["−1"]],true)}${V("r")}</div></div>
+      <div class="answer">Fill-in: (2,1) block = <b>C</b>, (2,2) = <b>0</b>, and the reference vector = <b>[0; −1]</b>.</div>`,
+  },
+  { topic:"Observer + state feedback with integral action",
+    prompt:`<p>Complete the diagram with a full-order observer and state feedback that includes integral action.</p>
+      <div class="fignote">See the partial system diagram in your Lecture 11 test.</div>`,
+    hints:[
+      `The observer is a copy of the plant (B, ∫, A, C) corrected by L(y − Cx̂), producing the estimate x̂.`,
+      `Add an integral state x_I = ∫(y − r). The control combines both: u = F·x̂ + F_I·x_I.`
+    ],
+    solution:`<ol>
+      <li>Observer: x̂̇ = Ax̂ + Bu + L(y − Cx̂) — same structure as the plant plus the output-error correction L.</li>
+      <li>Integrator on (y − r) produces x_I. Feedback u = F·x̂ + F_I·x_I feeds both the estimated state and the integral back to the plant.</li></ol>
+      <div class="answer">Three pieces: <b>observer</b> (estimates x from u, y), <b>state feedback</b> F on x̂, and an <b>integral path</b> F_I on ∫(y−r) that drives steady-state error to zero.</div>`,
+  },
+  { topic:"Controllable & observable?", brush:["matmul","detrank"],
+    prompt:`${ss(mat([["1","0"],["1","−1"]]),mat([["1"],["0"]]),mat([["1","0"]]))}<p>Determine controllability and observability from the 𝒞 and 𝒪 matrices.</p>`,
+    hints:[
+      `𝒞 = [B  AB]; 𝒪 = [C; CA].`,
+      `AB = [[1,0],[1,−1]]·[1,0]ᵀ = [1,1]ᵀ. CA = [1 0]·A = [1 0].`
+    ],
+    solution:`<ol>
+      <li>𝒞 = ${mat([["1","1"],["0","1"]])}, det = 1 ≠ 0 ⇒ <b>controllable</b>.</li>
+      <li>CA = [1 0] ⇒ 𝒪 = ${mat([["1","0"],["1","0"]],true)}, det = 0 ⇒ <b>not observable</b>.</li></ol>
+      <div class="answer"><b>Controllable, but not observable.</b></div>`,
+  },
+  { topic:"Observer-based closed-loop eigenvalues",
+    prompt:`<p>Write an expression for the closed-loop eigenvalues of the observer-based controller:</p>
+      <div class="eq"><div class="eqline">System: ẋ = Ax + Bu, y = Cx &nbsp;·&nbsp; Observer: x̂̇ = Ax̂ + Bu + L(Cx̂ − y) &nbsp;·&nbsp; Controller: u = Fx̂</div></div>`,
+    hints:[
+      `Use the estimation error e = x − x̂. Show ė depends only on (A + LC).`,
+      `And x-dynamics under u = Fx̂ = F(x − e) give (A + BF) plus a coupling term. Stack (x, e).`
+    ],
+    solution:`<ol>
+      <li>e = x − x̂ ⇒ ė = (A + LC)e (with this sign convention).</li>
+      <li>ẋ = (A + BF)x − BFe. The stacked system [x; e] has a block-triangular matrix ⇒ eigenvalues split.</li></ol>
+      <div class="answer"><b>The closed-loop eigenvalues are the eigenvalues of (A + BF) together with those of (A + LC).</b> This is the separation principle — controller and observer poles are designed independently.</div>`,
+  },
+]},
+
+{ n:12, title:"Introducing Reference Signals", blurb:"Observer+feedback+reference, zeros & bandwidth, ctrb/obsv, computing zeros", questions:[
+  { topic:"Observer + feedback + reference",
+    prompt:`<p>Complete the diagram with a full-order observer, state feedback, and a reference signal (no integral action).</p>
+      <div class="fignote">See the partial system diagram in your Lecture 12 test.</div>`,
+    hints:[
+      `Observer produces x̂ from u and y (plant copy + L(y − Cx̂)).`,
+      `Control law: u = −F·x̂ + N·r. The reference gain N scales r so the output tracks it at steady state.`
+    ],
+    solution:`<ol>
+      <li>Build the observer (B, ∫, A, C with correction L(y − Cx̂)) to get x̂.</li>
+      <li>Feed back u = −F·x̂ and add a scaled reference N·r, so u = −Fx̂ + Nr.</li></ol>
+      <div class="answer">Choose the reference scaling <b>N</b> so the DC gain from r to y is 1 (unity steady-state tracking). Unlike integral action, this relies on an accurate model rather than integrating the error.</div>`,
+  },
+  { topic:"Placing zeros to maximise bandwidth",
+    prompt:`<p>A system has poles at −1, −2, −3, −4 and no zeros. Where should <b>two zeros</b> be placed to maximise the bandwidth?</p>`,
+    hints:[
+      `Bandwidth is limited by the slowest (dominant) poles — the ones closest to the origin.`,
+      `A zero on top of a pole cancels it, removing that slow mode from the response.`
+    ],
+    solution:`<ol>
+      <li>The two slowest poles, −1 and −2, dominate and cap the bandwidth.</li>
+      <li>Placing zeros right on them cancels those modes, leaving the faster −3, −4 to govern the response.</li></ol>
+      <div class="answer"><b>Place the two zeros at s = −1 and s = −2</b> (cancel the two slowest poles) ⇒ bandwidth is then set by −3 and −4.</div>`,
+  },
+  { topic:"Controllable & observable?", brush:["matmul","detrank"],
+    prompt:`${ss(mat([["1","0"],["1","2"]]),mat([["1"],["0"]]),mat([["1","0"]]))}<p>Determine controllability and observability from the 𝒞 and 𝒪 matrices.</p>`,
+    hints:[
+      `𝒞 = [B  AB]; 𝒪 = [C; CA].`,
+      `AB = [[1,0],[1,2]]·[1,0]ᵀ = [1,1]ᵀ. CA = [1 0]·A = [1 0].`
+    ],
+    solution:`<ol>
+      <li>𝒞 = ${mat([["1","1"],["0","1"]])}, det = 1 ≠ 0 ⇒ <b>controllable</b>.</li>
+      <li>CA = [1 0] ⇒ 𝒪 = ${mat([["1","0"],["1","0"]],true)}, det = 0 ⇒ <b>not observable</b>.</li></ol>
+      <div class="answer"><b>Controllable, but not observable</b> (the output can't distinguish the second state).</div>`,
+  },
+  { topic:"Compute the zeros",
+    prompt:`<p>Compute the zeros of</p>${ss(mat([["0","1"],["−2","−3"]]),mat([["0"],["1"]]),mat([["0","1"]]))}`,
+    hints:[
+      `Zeros are the roots of the numerator of H(s) = C(sI − A)⁻¹B.`,
+      `sI − A = [[s,−1],[2, s+3]], det = s² + 3s + 2 = (s+1)(s+2).`
+    ],
+    solution:`<ol>
+      <li>(sI−A)⁻¹B = (1/det)·[[s+3,1],[−2,s]]·[0;1] = (1/det)·[1; s].</li>
+      <li>H(s) = C(sI−A)⁻¹B = [0 1]·(1/det)[1; s] = s / [(s+1)(s+2)].</li></ol>
+      <div class="answer"><b>One zero at s = 0</b> (the poles are −1 and −2).</div>`,
+  },
+]},
+];
+
+/* ================= progress ================= */
+const PKEY="csp-progress-v2";
+let prog={};
+try{prog=JSON.parse(localStorage.getItem(PKEY))||{};}catch(e){prog={};}
+const isDone=(n,i)=>!!(prog[n]&&prog[n][i]);
+function setDone(n,i,v){ prog[n]=prog[n]||{}; if(v)prog[n][i]=1; else delete prog[n][i]; localStorage.setItem(PKEY,JSON.stringify(prog)); }
+const doneCount=n=>Object.keys(prog[n]||{}).length;
+
+/* ================= hub ================= */
+const lgrid=document.getElementById("lgrid");
+function renderHub(){
+  lgrid.innerHTML="";
+  LESSONS.forEach(L=>{
+    const tot=L.questions.length, dn=doneCount(L.n);
+    const card=document.createElement("button");
+    card.className="lcard"+(L.custom?" custom":"")+(dn===tot?" complete":"");
+    card.innerHTML=`
+      <span class="lnum">Lesson ${L.n}${L.custom?" · custom test":""}</span>
+      <span class="lt">${L.title}</span>
+      <span class="lb">${L.blurb}</span>
+      <span class="lp"><span class="ltrack"><span class="lfill" style="width:${tot?dn/tot*100:0}%"></span></span>
+        <span>${dn===tot?'<span class="tag-ok">✓ done</span>':dn+" / "+tot}</span></span>`;
+    card.addEventListener("click",()=>openLesson(L.n));
+    lgrid.appendChild(card);
+  });
+}
+
+/* ================= lesson view ================= */
+const app=document.getElementById("app");
+const lessonhead=document.getElementById("lessonhead");
+let currentLesson=null;
+
+function openLesson(n){
+  const L=LESSONS.find(x=>x.n===n); if(!L)return;
+  currentLesson=L;
+  lessonhead.innerHTML=`<span class="topic">Lesson ${L.n}${L.custom?" · custom test":""}</span>
+    <h2>${L.title}</h2>
+    ${L.custom?'<p class="ldesc">Lecture 9 came as an exercise sheet, so this is a test in the same spirit — all solvable by hand.</p>':''}`;
+  app.innerHTML="";
+  L.questions.forEach((q,i)=>app.appendChild(makeCard(q,L.n,i)));
+  updateLessonProgress();
+  showView("lesson");
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function makeCard(q,n,i){
   const card=document.createElement("section");
-  card.className="card"+(done[i]?" done":"");
-  const nh=q.hints.length;
-  const brush=q.brush.map(id=>`<a data-course="${id}">${COURSE_NAME[id]} →</a>`).join("");
+  card.className="card"+(isDone(n,i)?" done":"");
+  const nh=q.hints?q.hints.length:0;
+  const brush=(q.brush||[]).map(id=>`<a data-course="${id}">${COURSE_NAME[id]} →</a>`).join("");
   card.innerHTML=`
     <div class="qhead"><span class="qnum">${i+1}</span>
-      <div><span class="topic">${q.topic}</span><h2 class="qtitle">${q.title}</h2></div></div>
+      <div><span class="topic">${q.topic}</span></div></div>
     <div class="prompt">${q.prompt}</div>
-    <div class="brush"><span class="lbl">Brush up</span>${brush}</div>
+    ${brush?`<div class="brush"><span class="lbl">Brush up</span>${brush}</div>`:""}
     <div class="actions">
-      <button class="act primary" data-role="hint">💡 Reveal hint <span data-role="hcount">(0/${nh})</span></button>
-      <button class="act" data-role="sol">Show full solution</button>
-      <button class="act gotit ${done[i]?'on':''}" data-role="got">${done[i]?'✓ Understood':'Mark as understood'}</button>
+      ${nh?`<button class="act primary" data-role="hint">💡 Reveal hint <span data-role="hcount">(0/${nh})</span></button>`:""}
+      <button class="act" data-role="sol">Show worked solution</button>
+      <button class="act gotit ${isDone(n,i)?'on':''}" data-role="got">${isDone(n,i)?'✓ Understood':'Mark as understood'}</button>
     </div>
     <div class="hints" data-role="hints"></div>
     <div data-role="solwrap"></div>`;
-  app.appendChild(card);
 
   const hintBox=card.querySelector("[data-role=hints]");
   const hintBtn=card.querySelector("[data-role=hint]");
-  const hcount=card.querySelector("[data-role=hcount]");
   const solBtn=card.querySelector("[data-role=sol]");
   const solWrap=card.querySelector("[data-role=solwrap]");
   const gotBtn=card.querySelector("[data-role=got]");
   let shown=0,solOpen=false;
 
-  hintBtn.addEventListener("click",()=>{
-    if(shown>=nh)return;
-    const h=document.createElement("div");
-    h.className="hint";
-    h.innerHTML=`<span class="htag">Hint ${shown+1}</span>${q.hints[shown]}`;
-    hintBox.appendChild(h);shown++;
-    if(shown>=nh){hintBtn.disabled=true;hintBtn.innerHTML="All hints shown";}
-    else hintBtn.innerHTML=`💡 Next hint <span>(${shown}/${nh})</span>`;
-  });
+  if(hintBtn){
+    hintBtn.addEventListener("click",()=>{
+      if(shown>=nh)return;
+      const h=document.createElement("div");h.className="hint";
+      h.innerHTML=`<span class="htag">Hint ${shown+1}</span>${q.hints[shown]}`;
+      hintBox.appendChild(h);shown++;
+      if(shown>=nh){hintBtn.disabled=true;hintBtn.innerHTML="All hints shown";}
+      else hintBtn.innerHTML=`💡 Next hint <span>(${shown}/${nh})</span>`;
+    });
+  }
   solBtn.addEventListener("click",()=>{
     solOpen=!solOpen;
     solWrap.innerHTML=solOpen?`<div class="solution"><span class="stag">Worked solution</span>${q.solution}</div>`:"";
-    solBtn.textContent=solOpen?"Hide solution":"Show full solution";
+    solBtn.textContent=solOpen?"Hide solution":"Show worked solution";
   });
   gotBtn.addEventListener("click",()=>{
-    done[i]=!done[i];
-    gotBtn.classList.toggle("on",done[i]);
-    gotBtn.textContent=done[i]?"✓ Understood":"Mark as understood";
-    card.classList.toggle("done",done[i]);
-    localStorage.setItem(KEY,JSON.stringify(done));
-    updateProgress();
+    const v=!isDone(n,i); setDone(n,i,v);
+    gotBtn.classList.toggle("on",v);
+    gotBtn.textContent=v?"✓ Understood":"Mark as understood";
+    card.classList.toggle("done",v);
+    updateLessonProgress();
   });
-  card.querySelectorAll(".brush a").forEach(a=>
-    a.addEventListener("click",()=>goCourse(a.dataset.course)));
-});
-
-function updateProgress(){
-  const n=Q.filter((_,i)=>done[i]).length;
-  document.getElementById("fill").style.width=(n/Q.length*100)+"%";
-  document.getElementById("ptext").textContent=`${n} / ${Q.length} marked understood`;
+  card.querySelectorAll(".brush a").forEach(a=>a.addEventListener("click",()=>goCourse(a.dataset.course)));
+  return card;
 }
-updateProgress();
+
+function updateLessonProgress(){
+  if(!currentLesson)return;
+  const tot=currentLesson.questions.length, dn=doneCount(currentLesson.n);
+  document.getElementById("fill").style.width=(tot?dn/tot*100:0)+"%";
+  document.getElementById("ptext").textContent=`${dn} / ${tot} understood`;
+}
+document.getElementById("back").addEventListener("click",()=>{ renderHub(); showView("hub"); });
 
 /* ================= crash courses ================= */
 const COURSES={
  matmul:{
-  name:"Matrix multiplication",
-  tag:"The engine behind 𝒞, 𝒪 and BK",
+  name:"Matrix multiplication", tag:"The engine behind 𝒞, 𝒪 and BK",
   concept:`
     <h3>The rule</h3>
-    <p>To multiply two matrices, the entry in <b>row i, column j</b> of the result is the
-      <b>dot product</b> of row i of the left matrix with column j of the right matrix:
-      multiply matching elements and add them up.</p>
+    <p>The entry in <b>row i, column j</b> of the product is the <b>dot product</b> of row i of the left matrix with column j of the right: multiply matching elements and add.</p>
     <div class="key">Entry(i,j) = (row i of left) · (column j of right) = a<sub>i1</sub>b<sub>1j</sub> + a<sub>i2</sub>b<sub>2j</sub> + …</div>
-    <p><b>Dimensions:</b> an (m×n) times an (n×p) gives an (m×p). The two inner numbers must match
-      — that shared <b>n</b> is what you sum over.</p>
-    <h3>The cases you'll actually meet</h3>
-    <p>• <b>Matrix × vector</b> (2×2 · 2×1 → 2×1): as in <span class="var">AB</span> and <span class="var">CA</span>ᵀ.<br>
-       • <b>Row × matrix</b> (1×2 · 2×2 → 1×2): as in <span class="var">CA</span>.<br>
-       • <b>Outer product</b> (2×1 · 1×2 → 2×2): as in <span class="var">BK</span> — a column times a row fills a whole matrix.</p>
+    <p><b>Dimensions:</b> (m×n) times (n×p) gives (m×p). The inner numbers must match — that shared n is what you sum over.</p>
+    <h3>Cases you'll meet</h3>
+    <p>• Matrix × vector (AB, CAᵀ) &nbsp; • Row × matrix (CA) &nbsp; • Outer product (BK: a column times a row fills a matrix).</p>
     <h3>Worked example</h3>
-    <p>${mat([["−3","0"],["1","−2"]])}${mat([["0"],["1"]])}:</p>
-    <p>Top entry = (−3)(0) + (0)(1) = 0. &nbsp; Bottom entry = (1)(0) + (−2)(1) = −2. &nbsp; Result = ${mat([["0"],["−2"]])}.</p>
-    <div class="key">In the practice below the matrices range up to 3×3, and you're asked for the <b>result's dimensions first</b>: rows come from the <i>left</i> matrix, columns from the <i>right</i>. Get the size right and the answer grid appears to fill in.</div>`,
-  gen:genMatMul
- },
+    <p>${mat([["−3","0"],["1","−2"]])}${mat([["0"],["1"]])}: top = (−3)(0)+(0)(1)=0, bottom = (1)(0)+(−2)(1)=−2 ⇒ ${mat([["0"],["−2"]])}.</p>
+    <div class="key">In the drill, sizes go up to 3×3 and you give the <b>result's dimensions first</b> (rows from the left, columns from the right); the grid then appears to fill in.</div>`,
+  gen:genMatMul },
  detrank:{
-  name:"Determinant & rank of a 2×2",
-  tag:"The controllability / observability test itself",
+  name:"Determinant & rank of a 2×2", tag:"The controllability / observability test itself",
   concept:`
     <h3>Determinant</h3>
     <div class="key">det ${mat([["a","b"],["c","d"]])} = ad − bc</div>
-    <p>Multiply the main diagonal, subtract the anti-diagonal. That single number tells you almost everything for a 2×2.</p>
-    <h3>Rank</h3>
-    <p>Rank = the number of genuinely independent rows (equivalently columns). For a 2×2:</p>
-    <p>• <b>det ≠ 0</b> → rank <b>2</b> (full rank, invertible).<br>
-       • <b>det = 0</b> but not all entries zero → rank <b>1</b> (rows are multiples of each other).<br>
-       • <b>all entries 0</b> → rank <b>0</b>.</p>
-    <div class="key">In control: a system is controllable / observable exactly when its 𝒞 / 𝒪 matrix has <b>full rank</b> (rank = n). For 2×2 that just means <b>det ≠ 0</b>.</div>
-    <h3>Worked example</h3>
-    <p>det ${mat([["0","1"],["1","−2"]])} = (0)(−2) − (1)(1) = −1 ≠ 0 ⇒ rank 2 (full rank ⇒ observable).</p>`,
-  gen:genDet
- },
+    <p>Main diagonal minus anti-diagonal.</p>
+    <h3>Rank (2×2)</h3>
+    <p>• det ≠ 0 → rank <b>2</b> (full rank). &nbsp; • det = 0, not all zero → rank <b>1</b>. &nbsp; • all zero → rank <b>0</b>.</p>
+    <div class="key">A system is controllable / observable exactly when its 𝒞 / 𝒪 has <b>full rank</b>. For 2×2 that just means det ≠ 0.</div>
+    <h3>Example</h3>
+    <p>det ${mat([["0","1"],["1","−2"]])} = (0)(−2) − (1)(1) = −1 ≠ 0 ⇒ rank 2.</p>`,
+  gen:genDet },
  eig:{
-  name:"Eigenvalues of a 2×2",
-  tag:"Poles, stability & pole placement",
+  name:"Eigenvalues of a 2×2", tag:"Poles, stability & pole placement",
   concept:`
     <h3>Definition</h3>
-    <p>The eigenvalues <span class="var">λ</span> of A solve <b>det(A − λI) = 0</b>. They are the system's
-      <b>poles</b>: negative real parts ⇒ stable, positive ⇒ unstable.</p>
-    <h3>The 2×2 shortcut</h3>
-    <div class="key">λ² − (trace)·λ + (det) = 0, &nbsp; where trace = a + d and det = ad − bc</div>
-    <p>Then solve the quadratic — factor it, or use λ = [ trace ± √(trace² − 4·det) ] / 2.
-      A diagonal or triangular matrix is even easier: the eigenvalues are just the diagonal entries.</p>
-    <h3>Where it shows up here</h3>
-    <p>• <b>Observer design:</b> poles are eigenvalues of <span class="var">A − LC</span> — pick L to place them.<br>
-       • <b>State feedback:</b> poles are eigenvalues of <span class="var">A + BK</span> — pick K to place them.</p>
-    <h3>Worked example</h3>
-    <p>${mat([["1","2"],["2","1"]])}: trace = 2, det = (1)(1) − (2)(2) = −3.
-      So λ² − 2λ − 3 = 0 ⇒ (λ − 3)(λ + 1) = 0 ⇒ <mark>λ = 3, −1</mark>.</p>`,
-  gen:genEig
- }
+    <p>Eigenvalues λ solve det(A − λI) = 0 — they are the system's <b>poles</b> (Re &lt; 0 ⇒ stable).</p>
+    <h3>2×2 shortcut</h3>
+    <div class="key">λ² − (trace)·λ + (det) = 0, &nbsp; trace = a + d, det = ad − bc</div>
+    <p>Solve the quadratic (factor or λ = [trace ± √(trace²−4det)]/2). Diagonal/triangular ⇒ read the diagonal.</p>
+    <h3>Where it shows up</h3>
+    <p>• Observer poles = eig(A − LC). &nbsp; • State-feedback poles = eig(A + BF).</p>
+    <h3>Example</h3>
+    <p>${mat([["1","2"],["2","1"]])}: trace 2, det −3 ⇒ λ² − 2λ − 3 = (λ−3)(λ+1) ⇒ λ = 3, −1.</p>`,
+  gen:genEig }
 };
 
-/* ---- practice generators ---- */
 function genMatMul(){
-  // Left is m×n, right is n×p, result is m×p. Sizes range 1..3.
   let m,n,p;
   do{ m=randInt(1,3); n=randInt(1,3); p=randInt(1,3); }while(m*p<2);
   const L=Array.from({length:m},()=>Array.from({length:n},()=>randInt(-3,3)));
@@ -500,20 +1119,12 @@ function genMatMul(){
   const res=Array.from({length:m},(_,i)=>Array.from({length:p},(_,j)=>{
     let s=0; for(let k=0;k<n;k++) s+=L[i][k]*R[k][j]; return s; }));
   const flat=res.flat();
-
   let entrySteps="";
   for(let i=0;i<m;i++)for(let j=0;j<p;j++){
-    const terms=[];
-    for(let k=0;k<n;k++) terms.push(par(L[i][k])+par(R[k][j]));
+    const terms=[]; for(let k=0;k<n;k++) terms.push(par(L[i][k])+par(R[k][j]));
     entrySteps+=`<li>entry (${i+1},${j+1}) = ${terms.join(" + ")} = <b>${fmt(res[i][j])}</b></li>`;
   }
-
-  const dimIn=root=>({
-    r:root.querySelector('.dim-in[data-role=r]'),
-    c:root.querySelector('.dim-in[data-role=c]'),
-    box:root.querySelector('.matbuild')
-  });
-
+  const dimIn=root=>({r:root.querySelector('.dim-in[data-role=r]'),c:root.querySelector('.dim-in[data-role=c]'),box:root.querySelector('.matbuild')});
   return {
     html:`<div class="eq"><div class="eqline">${matNum(L)} ${matNum(R)}</div></div>
       <p class="dimq">First, the result's dimensions:
@@ -527,57 +1138,37 @@ function genMatMul(){
       function rebuild(){
         const dr=parseNum(r.value), dc=parseNum(c.value);
         if(Number.isInteger(dr)&&dr>=1&&dr<=3&&Number.isInteger(dc)&&dc>=1&&dc<=3){
-          const key=dr+"x"+dc;
-          if(box.dataset.key!==key){box.innerHTML=matIn(dr,dc);box.dataset.key=key;}
-        }else{
-          box.innerHTML='<span class="hintmsg">enter valid dimensions above to build the answer grid</span>';
-          box.dataset.key="";
-        }
+          const key=dr+"x"+dc; if(box.dataset.key!==key){box.innerHTML=matIn(dr,dc);box.dataset.key=key;}
+        }else{box.innerHTML='<span class="hintmsg">enter valid dimensions above to build the answer grid</span>';box.dataset.key="";}
       }
-      r.addEventListener("input",rebuild);
-      c.addEventListener("input",rebuild);
+      r.addEventListener("input",rebuild); c.addEventListener("input",rebuild);
     },
-    steps:`<ol>
-      <li>Left is <b>${m}×${n}</b>, right is <b>${n}×${p}</b>. The inner numbers match (${n} = ${n}), so the product exists and has size <b>${m}×${p}</b> — the two outer numbers.</li>
-      ${entrySteps}</ol>`,
+    steps:`<ol><li>Left is <b>${m}×${n}</b>, right is <b>${n}×${p}</b>: inner numbers match, so the product is <b>${m}×${p}</b>.</li>${entrySteps}</ol>`,
     check:root=>{
       const {r,c,box}=dimIn(root);
       const dr=parseNum(r.value), dc=parseNum(c.value);
       const drOk=dr===m, dcOk=dc===p;
       r.classList.toggle("good-in",drOk); r.classList.toggle("bad-in",!drOk);
       c.classList.toggle("good-in",dcOk); c.classList.toggle("bad-in",!dcOk);
-      let cellsOk=false;
-      if(box.dataset.key===m+"x"+p) cellsOk=compareCells(box,flat);
+      let cellsOk=false; if(box.dataset.key===m+"x"+p) cellsOk=compareCells(box,flat);
       return drOk&&dcOk&&cellsOk;
     }
   };
 }
-
 function genDet(){
-  let A,det;
-  do{ A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
-      det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
-  }while(false);
+  const A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
+  const det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
   const anyNonZero=A.flat().some(x=>x!==0);
   const rank= det!==0 ? 2 : (anyNonZero?1:0);
   return {
-    html:`<div class="eq"><div class="eqline">A = ${mat([[fmt(A[0][0]),fmt(A[0][1])],[fmt(A[1][0]),fmt(A[1][1])]])}</div></div>
-      <p style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center">
-        det A = <input class="num-in" inputmode="text" aria-label="determinant"></p>
-      <p style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center">
-        rank A = <span class="rankgrp">
-          <button class="rank-btn" data-v="0">0</button>
-          <button class="rank-btn" data-v="1">1</button>
-          <button class="rank-btn" data-v="2">2</button></span></p>`,
-    wire:root=>{
-      root.querySelectorAll(".rank-btn").forEach(b=>b.addEventListener("click",()=>{
-        root.querySelectorAll(".rank-btn").forEach(x=>x.classList.remove("sel","good-in","bad-in"));
-        b.classList.add("sel");
-      }));
-    },
-    steps:`<ol>
-      <li>det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = ${fmt(A[0][0]*A[1][1])} − ${fmt(A[0][1]*A[1][0])} = <b>${fmt(det)}</b></li>
-      <li>${det!==0?"det ≠ 0 ⇒ rank <b>2</b> (full rank)":(anyNonZero?"det = 0 but entries aren't all zero ⇒ rank <b>1</b>":"all entries zero ⇒ rank <b>0</b>")}.</li></ol>`,
+    html:`<div class="eq"><div class="eqline">A = ${matNum(A)}</div></div>
+      <p style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center">det A = <input class="num-in" inputmode="text" aria-label="determinant"></p>
+      <p style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:center">rank A = <span class="rankgrp">
+        <button class="rank-btn" data-v="0">0</button><button class="rank-btn" data-v="1">1</button><button class="rank-btn" data-v="2">2</button></span></p>`,
+    wire:root=>{ root.querySelectorAll(".rank-btn").forEach(b=>b.addEventListener("click",()=>{
+      root.querySelectorAll(".rank-btn").forEach(x=>x.classList.remove("sel","good-in","bad-in")); b.classList.add("sel"); })); },
+    steps:`<ol><li>det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = <b>${fmt(det)}</b></li>
+      <li>${det!==0?"det ≠ 0 ⇒ rank <b>2</b>":(anyNonZero?"det = 0, not all zero ⇒ rank <b>1</b>":"all zero ⇒ rank <b>0</b>")}.</li></ol>`,
     check:root=>{
       const numEl=root.querySelector(".num-in");
       const numOk=parseNum(numEl.value)===det;
@@ -590,32 +1181,24 @@ function genDet(){
     }
   };
 }
-
 function isSq(n){const s=Math.round(Math.sqrt(n));return s*s===n?s:-1;}
 function genEig(){
   let A,tr,det,disc,s,l1,l2,ok=false;
   for(let k=0;k<400 && !ok;k++){
     A=[[randInt(-3,3),randInt(-3,3)],[randInt(-3,3),randInt(-3,3)]];
-    tr=A[0][0]+A[1][1];
-    det=A[0][0]*A[1][1]-A[0][1]*A[1][0];
-    disc=tr*tr-4*det;
-    if(disc<0)continue;
-    s=isSq(disc);
-    if(s<0)continue;
-    if((tr+s)%2!==0)continue;          // ensure integer eigenvalues
-    l1=(tr+s)/2; l2=(tr-s)/2;
-    if(A[0][1]===0&&A[1][0]===0)continue; // avoid trivially-diagonal
-    ok=true;
+    tr=A[0][0]+A[1][1]; det=A[0][0]*A[1][1]-A[0][1]*A[1][0]; disc=tr*tr-4*det;
+    if(disc<0)continue; s=isSq(disc); if(s<0)continue;
+    if((tr+s)%2!==0)continue; l1=(tr+s)/2; l2=(tr-s)/2;
+    if(A[0][1]===0&&A[1][0]===0)continue; ok=true;
   }
   if(!ok){A=[[1,2],[2,1]];tr=2;det=-3;disc=16;s=4;l1=3;l2=-1;}
   return {
-    html:`<div class="eq"><div class="eqline">A = ${mat([[fmt(A[0][0]),fmt(A[0][1])],[fmt(A[1][0]),fmt(A[1][1])]])}</div>
-      <div class="eqline" style="margin-top:.4rem">λ = <input class="eig-in" inputmode="text" aria-label="first eigenvalue">
-        , &nbsp; <input class="eig-in" inputmode="text" aria-label="second eigenvalue"></div></div>`,
+    html:`<div class="eq"><div class="eqline">A = ${matNum(A)}</div>
+      <div class="eqline" style="margin-top:.4rem">λ = <input class="eig-in" inputmode="text" aria-label="first eigenvalue">, &nbsp;
+        <input class="eig-in" inputmode="text" aria-label="second eigenvalue"></div></div>`,
     steps:`<ol>
-      <li>trace = ${fmt(A[0][0])} + ${fmt(A[1][1])} = <b>${fmt(tr)}</b>; &nbsp; det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = <b>${fmt(det)}</b>.</li>
-      <li>Characteristic equation: λ² − ${fmt(tr)}λ + ${fmt(det)} = 0${tr<0?" (i.e. λ² + "+Math.abs(tr)+"λ …)":""}.</li>
-      <li>λ = [ ${fmt(tr)} ± √(${fmt(tr)}² − 4·${fmt(det)}) ] / 2 = [ ${fmt(tr)} ± √${disc} ] / 2 = [ ${fmt(tr)} ± ${s} ] / 2.</li>
+      <li>trace = <b>${fmt(tr)}</b>, det = <b>${fmt(det)}</b>.</li>
+      <li>λ² − ${fmt(tr)}λ + ${fmt(det)} = 0 ⇒ λ = [ ${fmt(tr)} ± √${disc} ]/2 = [ ${fmt(tr)} ± ${s} ]/2.</li>
       <li>⇒ <b>λ = ${fmt(l1)}</b> and <b>λ = ${fmt(l2)}</b> (order doesn't matter).</li></ol>`,
     check:root=>{
       const ins=[...root.querySelectorAll(".eig-in")];
@@ -629,80 +1212,52 @@ function genEig(){
   };
 }
 
-/* ---- render a course ---- */
 const pillsEl=document.getElementById("pills");
 const courseBody=document.getElementById("course-body");
-let activeCourse="matmul";
 Object.keys(COURSES).forEach(id=>{
   const b=document.createElement("button");
   b.className="pill";b.textContent=COURSES[id].name;b.dataset.id=id;
   b.addEventListener("click",()=>selectCourse(id));
   pillsEl.appendChild(b);
 });
-
 function selectCourse(id){
-  activeCourse=id;
   pillsEl.querySelectorAll(".pill").forEach(p=>p.classList.toggle("on",p.dataset.id===id));
   const c=COURSES[id];
   courseBody.innerHTML=`
     <div class="cshead"><span class="topic">${c.tag}</span><h2>${c.name}</h2></div>
     <div class="concept">${c.concept}</div>
     <div class="practice">
-      <div class="pracHead"><span class="stag">Practice</span>
-        <button class="act" data-a="new">↻ New problem</button></div>
+      <div class="pracHead"><span class="stag">Practice</span><button class="act" data-a="new">↻ New problem</button></div>
       <div class="prob"></div>
-      <div class="pracActions">
-        <button class="act primary" data-a="check">Check answer</button>
-        <button class="act" data-a="steps">Show steps</button></div>
-      <div class="fb"></div>
-      <div class="steps"></div>
+      <div class="pracActions"><button class="act primary" data-a="check">Check answer</button><button class="act" data-a="steps">Show steps</button></div>
+      <div class="fb"></div><div class="steps"></div>
     </div>`;
   initPractice(courseBody.querySelector(".practice"), c.gen);
 }
-
 function initPractice(widget, genFn){
-  const probEl=widget.querySelector(".prob");
-  const fb=widget.querySelector(".fb");
-  const steps=widget.querySelector(".steps");
-  const checkBtn=widget.querySelector('[data-a=check]');
-  const stepsBtn=widget.querySelector('[data-a=steps]');
-  const newBtn=widget.querySelector('[data-a=new]');
+  const probEl=widget.querySelector(".prob"), fb=widget.querySelector(".fb"), steps=widget.querySelector(".steps");
+  const checkBtn=widget.querySelector('[data-a=check]'), stepsBtn=widget.querySelector('[data-a=steps]'), newBtn=widget.querySelector('[data-a=new]');
   let cur;
-  function load(){
-    cur=genFn();
-    probEl.innerHTML=cur.html;
-    if(cur.wire)cur.wire(probEl);
-    fb.className="fb";fb.textContent="";
-    steps.innerHTML="";steps.style.display="none";stepsBtn.textContent="Show steps";
-  }
-  checkBtn.onclick=()=>{
-    const ok=cur.check(probEl);
-    fb.className="fb "+(ok?"ok":"no");
-    fb.textContent=ok?"✓ Correct — nice work!":"Not quite — fix the highlighted entries, or peek at the steps.";
-  };
-  stepsBtn.onclick=()=>{
-    const open=steps.style.display!=="none";
+  function load(){ cur=genFn(); probEl.innerHTML=cur.html; if(cur.wire)cur.wire(probEl);
+    fb.className="fb";fb.textContent=""; steps.innerHTML="";steps.style.display="none";stepsBtn.textContent="Show steps"; }
+  checkBtn.onclick=()=>{ const ok=cur.check(probEl); fb.className="fb "+(ok?"ok":"no");
+    fb.textContent=ok?"✓ Correct — nice work!":"Not quite — fix the highlighted entries, or peek at the steps."; };
+  stepsBtn.onclick=()=>{ const open=steps.style.display!=="none";
     if(open){steps.style.display="none";stepsBtn.textContent="Show steps";}
-    else{steps.innerHTML=cur.steps;steps.style.display="block";stepsBtn.textContent="Hide steps";}
-  };
-  newBtn.onclick=load;
-  load();
+    else{steps.innerHTML=cur.steps;steps.style.display="block";stepsBtn.textContent="Hide steps";} };
+  newBtn.onclick=load; load();
 }
 selectCourse("matmul");
 
-/* ================= view switching ================= */
-const vTest=document.getElementById("view-test");
-const vCourses=document.getElementById("view-courses");
-const navTest=document.getElementById("navTest");
-const navCourses=document.getElementById("navCourses");
+/* ================= views ================= */
+const views={hub:document.getElementById("view-hub"),lesson:document.getElementById("view-lesson"),courses:document.getElementById("view-courses")};
+const navHub=document.getElementById("navHub"), navCourses=document.getElementById("navCourses");
 function showView(which){
-  const test=which==="test";
-  vTest.style.display=test?"":"none";
-  vCourses.style.display=test?"none":"";
-  navTest.classList.toggle("on",test);
-  navCourses.classList.toggle("on",!test);
+  Object.entries(views).forEach(([k,el])=>el.style.display=(k===which)?"":"none");
+  navHub.classList.toggle("on",which==="hub"||which==="lesson");
+  navCourses.classList.toggle("on",which==="courses");
 }
-navTest.addEventListener("click",()=>showView("test"));
+navHub.addEventListener("click",()=>{ renderHub(); showView("hub"); });
 navCourses.addEventListener("click",()=>showView("courses"));
 function goCourse(id){showView("courses");selectCourse(id);window.scrollTo({top:0,behavior:"smooth"});}
 
@@ -712,6 +1267,10 @@ document.getElementById("theme").addEventListener("click",()=>{
   const cur=root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
   root.setAttribute("data-theme",cur==="dark"?"light":"dark");
 });
+
+/* init */
+renderHub();
+showView("hub");
 </script>
 </body>
 </html>

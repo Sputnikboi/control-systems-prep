@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="description" content="A simple math whiteboard for working control-systems problems.">
+<meta name="theme-color" content="#0e151f">
+<title>Whiteboard · Control Prep</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='88'%3E%E2%9C%8F%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#12161d; --grid:#222b36; --panel:#1b2530; --panel-line:#2c3947;
+    --ink:#e7edf4; --ink-soft:#9fb0c2; --accent:#3fd0c9; --accent-ink:#0e151f;
+    --sans:ui-sans-serif,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  }
+  :root.light{ --bg:#fbfcfe; --grid:#e4eaf1; --panel:#ffffff; --panel-line:#dbe3ec;
+    --ink:#16202e; --ink-soft:#51637a; --accent:#0c8f8f; --accent-ink:#ffffff; }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:var(--sans);color:var(--ink);}
+  #stage{position:fixed;inset:0;touch-action:none;cursor:crosshair;}
+  canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+
+  /* toolbar */
+  .bar{position:fixed;top:.7rem;left:50%;transform:translateX(-50%);z-index:10;
+    display:flex;align-items:center;gap:.35rem;flex-wrap:wrap;justify-content:center;
+    background:var(--panel);border:1px solid var(--panel-line);border-radius:14px;
+    padding:.45rem .55rem;box-shadow:0 8px 30px rgba(0,0,0,.35);max-width:calc(100vw - 1.4rem);}
+  .grp{display:flex;align-items:center;gap:.3rem;padding:0 .35rem;border-right:1px solid var(--panel-line);}
+  .grp:last-child{border-right:0;}
+  .tbtn{border:1px solid transparent;background:transparent;color:var(--ink);border-radius:9px;
+    width:2.3rem;height:2.3rem;font-size:1.15rem;cursor:pointer;display:inline-flex;align-items:center;
+    justify-content:center;transition:.12s;line-height:1;padding:0;}
+  .tbtn:hover{background:var(--panel-line);}
+  .tbtn.on{background:var(--accent);color:var(--accent-ink);}
+  .tbtn:disabled{opacity:.32;cursor:default;}
+  .tbtn.on:hover{background:var(--accent);}
+  .lbl{font-size:.62rem;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-soft);
+    margin-right:.15rem;font-weight:600;}
+  .swatch{width:1.55rem;height:1.55rem;border-radius:50%;cursor:pointer;border:2px solid transparent;
+    padding:0;transition:transform .1s;}
+  .swatch:hover{transform:scale(1.12);}
+  .swatch.on{border-color:var(--ink);box-shadow:0 0 0 2px var(--panel);}
+  input[type=range]{width:5rem;accent-color:var(--accent);cursor:pointer;}
+  .home{position:fixed;left:.8rem;bottom:.8rem;z-index:10;font-family:var(--sans);font-size:.82rem;
+    text-decoration:none;color:var(--ink-soft);background:var(--panel);border:1px solid var(--panel-line);
+    border-radius:99px;padding:.4rem .8rem;box-shadow:0 4px 16px rgba(0,0,0,.25);}
+  .home:hover{color:var(--accent);border-color:var(--accent);}
+  .hint{position:fixed;right:.8rem;bottom:.8rem;z-index:10;font-size:.72rem;color:var(--ink-soft);
+    background:var(--panel);border:1px solid var(--panel-line);border-radius:8px;padding:.35rem .6rem;
+    max-width:15rem;line-height:1.45;}
+  @media (max-width:680px){ .hint{display:none;} .lbl{display:none;} }
+</style>
+</head>
+<body>
+<div id="stage">
+  <canvas id="grid"></canvas>
+  <canvas id="draw"></canvas>
+</div>
+
+<div class="bar">
+  <div class="grp">
+    <button class="tbtn on" id="tPen" title="Pen (P)">✎</button>
+    <button class="tbtn" id="tErase" title="Eraser (E)">⌫</button>
+  </div>
+  <div class="grp" id="colors"></div>
+  <div class="grp">
+    <span class="lbl">Size</span>
+    <input type="range" id="size" min="1" max="26" value="3">
+  </div>
+  <div class="grp">
+    <button class="tbtn" id="undo" title="Undo (Ctrl+Z)">↶</button>
+    <button class="tbtn" id="redo" title="Redo (Ctrl+Shift+Z)">↷</button>
+    <button class="tbtn" id="clear" title="Clear all">🗑</button>
+  </div>
+  <div class="grp">
+    <button class="tbtn on" id="tGrid" title="Toggle grid">▦</button>
+    <button class="tbtn" id="tTheme" title="Light / dark board">◐</button>
+    <button class="tbtn" id="save" title="Save as PNG">⭳</button>
+  </div>
+</div>
+
+<a class="home" href="index.html">← Study tool</a>
+<div class="hint">Draw with mouse, touch, or stylus. <b>P</b> pen · <b>E</b> eraser · <b>Ctrl+Z</b> undo · grid helps for pole plots &amp; Bode sketches.</div>
+
+<script>
+const gridCanvas=document.getElementById("grid");
+const drawCanvas=document.getElementById("draw");
+const gctx=gridCanvas.getContext("2d");
+const dctx=drawCanvas.getContext("2d");
+const root=document.documentElement;
+
+const PALETTE_DARK=["#e7edf4","#3fd0c9","#ffd24a","#ff7a8a","#7aa2ff","#8be08b"];
+const PALETTE_LIGHT=["#16202e","#0c8f8f","#c07c12","#c23b52","#2f5fd0","#2f7d4f"];
+
+let state={ tool:"pen", color:PALETTE_DARK[0], size:3, grid:true, light:false };
+let strokes=[];      // committed strokes
+let redoStack=[];
+let current=null;    // stroke in progress
+let dpr=Math.max(1, window.devicePixelRatio||1);
+
+/* ---------- sizing / hi-dpi ---------- */
+function resize(){
+  dpr=Math.max(1, window.devicePixelRatio||1);
+  const w=window.innerWidth, h=window.innerHeight;
+  [gridCanvas,drawCanvas].forEach(c=>{ c.width=Math.round(w*dpr); c.height=Math.round(h*dpr); });
+  gctx.setTransform(dpr,0,0,dpr,0,0);
+  dctx.setTransform(dpr,0,0,dpr,0,0);
+  drawGrid();
+  redrawStrokes();
+}
+window.addEventListener("resize", resize);
+
+/* ---------- grid ---------- */
+function drawGrid(){
+  const w=window.innerWidth, h=window.innerHeight;
+  gctx.clearRect(0,0,w,h);
+  gctx.fillStyle=getVar("--bg");
+  gctx.fillRect(0,0,w,h);
+  if(!state.grid) return;
+  const step=28;
+  gctx.strokeStyle=getVar("--grid");
+  gctx.lineWidth=1;
+  gctx.beginPath();
+  for(let x=step*0.5;x<w;x+=step){ gctx.moveTo(x,0); gctx.lineTo(x,h); }
+  for(let y=step*0.5;y<h;y+=step){ gctx.moveTo(0,y); gctx.lineTo(w,y); }
+  gctx.stroke();
+}
+function getVar(n){ return getComputedStyle(root).getPropertyValue(n).trim(); }
+
+/* ---------- stroke drawing ---------- */
+function strokeStyleFor(s){
+  dctx.lineCap="round"; dctx.lineJoin="round";
+  if(s.tool==="eraser"){
+    dctx.globalCompositeOperation="destination-out";
+    dctx.strokeStyle="rgba(0,0,0,1)";
+    dctx.lineWidth=s.size*3.2;
+  }else{
+    dctx.globalCompositeOperation="source-over";
+    dctx.strokeStyle=s.color;
+    dctx.lineWidth=s.size;
+  }
+}
+function renderStroke(s){
+  const p=s.points; if(p.length===0) return;
+  strokeStyleFor(s);
+  dctx.beginPath();
+  if(p.length===1){ // a dot
+    dctx.arc(p[0].x,p[0].y,Math.max(dctx.lineWidth/2,0.6),0,Math.PI*2);
+    dctx.fillStyle = s.tool==="eraser" ? "rgba(0,0,0,1)" : s.color;
+    const prev=dctx.globalCompositeOperation;
+    dctx.fill();
+    dctx.globalCompositeOperation=prev;
+    return;
+  }
+  dctx.moveTo(p[0].x,p[0].y);
+  for(let i=1;i<p.length-1;i++){
+    const mx=(p[i].x+p[i+1].x)/2, my=(p[i].y+p[i+1].y)/2;
+    dctx.quadraticCurveTo(p[i].x,p[i].y,mx,my);
+  }
+  dctx.lineTo(p[p.length-1].x,p[p.length-1].y);
+  dctx.stroke();
+}
+function redrawStrokes(){
+  const w=window.innerWidth,h=window.innerHeight;
+  dctx.clearRect(0,0,w,h);
+  strokes.forEach(renderStroke);
+  dctx.globalCompositeOperation="source-over";
+}
+
+/* ---------- pointer handling ---------- */
+let drawing=false;
+function pos(e){ return {x:e.clientX, y:e.clientY}; }
+function down(e){
+  if(e.button!==undefined && e.button!==0 && e.pointerType==="mouse") return;
+  drawing=true;
+  drawCanvas.setPointerCapture(e.pointerId);
+  const base=state.size;
+  const w = (e.pressure && e.pressure>0 && e.pointerType!=="mouse") ? base*(0.4+1.2*e.pressure) : base;
+  current={ tool:state.tool, color:state.color, size:w, points:[pos(e)] };
+  redoStack=[];
+  renderStroke(current);
+  dctx.globalCompositeOperation="source-over";
+}
+function move(e){
+  if(!drawing) return;
+  const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+  for(const ev of evs) current.points.push(pos(ev));
+  // incremental: redraw just this stroke over existing by re-rendering all is simplest & crisp
+  redrawStrokes();
+  renderStroke(current);
+  dctx.globalCompositeOperation="source-over";
+}
+function up(){
+  if(!drawing) return;
+  drawing=false;
+  if(current && current.points.length){ strokes.push(current); }
+  current=null;
+  updateButtons();
+}
+drawCanvas.addEventListener("pointerdown",down);
+drawCanvas.addEventListener("pointermove",move);
+window.addEventListener("pointerup",up);
+drawCanvas.addEventListener("pointercancel",up);
+
+/* ---------- toolbar wiring ---------- */
+function setTool(t){
+  state.tool=t;
+  document.getElementById("tPen").classList.toggle("on",t==="pen");
+  document.getElementById("tErase").classList.toggle("on",t==="eraser");
+  drawCanvas.style.cursor = t==="eraser" ? "cell" : "crosshair";
+}
+document.getElementById("tPen").onclick=()=>setTool("pen");
+document.getElementById("tErase").onclick=()=>setTool("eraser");
+
+const colorsEl=document.getElementById("colors");
+function buildPalette(){
+  const pal = state.light?PALETTE_LIGHT:PALETTE_DARK;
+  colorsEl.innerHTML="";
+  pal.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.className="swatch"+(i===0?" on":""); b.style.background=c; b.title=c;
+    b.onclick=()=>{ state.color=c; setTool("pen");
+      colorsEl.querySelectorAll(".swatch").forEach(s=>s.classList.remove("on")); b.classList.add("on"); };
+    colorsEl.appendChild(b);
+  });
+  state.color=pal[0];
+}
+document.getElementById("size").oninput=e=>{ state.size=+e.target.value; };
+
+document.getElementById("undo").onclick=undo;
+document.getElementById("redo").onclick=redo;
+function undo(){ if(strokes.length){ redoStack.push(strokes.pop()); redrawStrokes(); updateButtons(); } }
+function redo(){ if(redoStack.length){ strokes.push(redoStack.pop()); redrawStrokes(); updateButtons(); } }
+function updateButtons(){
+  document.getElementById("undo").disabled=!strokes.length;
+  document.getElementById("redo").disabled=!redoStack.length;
+}
+document.getElementById("clear").onclick=()=>{
+  if(strokes.length && !confirm("Clear the whole board?")) return;
+  strokes=[]; redoStack=[]; redrawStrokes(); updateButtons();
+};
+
+document.getElementById("tGrid").onclick=e=>{
+  state.grid=!state.grid; e.currentTarget.classList.toggle("on",state.grid); drawGrid();
+};
+document.getElementById("tTheme").onclick=()=>{
+  state.light=!state.light; root.classList.toggle("light",state.light);
+  root.querySelector('meta[name=theme-color]')?.setAttribute("content", state.light?"#fbfcfe":"#0e151f");
+  buildPalette(); drawGrid();
+};
+document.getElementById("save").onclick=()=>{
+  const w=window.innerWidth,h=window.innerHeight;
+  const out=document.createElement("canvas"); out.width=w*dpr; out.height=h*dpr;
+  const octx=out.getContext("2d");
+  octx.drawImage(gridCanvas,0,0);
+  octx.drawImage(drawCanvas,0,0);
+  const a=document.createElement("a");
+  a.download="whiteboard.png"; a.href=out.toDataURL("image/png"); a.click();
+};
+
+/* keyboard */
+window.addEventListener("keydown",e=>{
+  if(e.target.tagName==="INPUT") return;
+  const k=e.key.toLowerCase();
+  if((e.ctrlKey||e.metaKey)&&k==="z"){ e.preventDefault(); e.shiftKey?redo():undo(); return; }
+  if((e.ctrlKey||e.metaKey)&&k==="y"){ e.preventDefault(); redo(); return; }
+  if(k==="p") setTool("pen");
+  if(k==="e") setTool("eraser");
+});
+
+/* meta theme-color element (ensure present) */
+if(!document.querySelector('meta[name=theme-color]')){
+  const m=document.createElement("meta"); m.name="theme-color"; document.head.appendChild(m);
+}
+
+buildPalette();
+setTool("pen");
+resize();
+updateButtons();
+</script>
+</body>
+</html>
