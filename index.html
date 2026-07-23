@@ -232,6 +232,26 @@
   .rank-btn.sel.good-in{background:var(--good);border-color:var(--good);color:#fff;}
   .rank-btn.sel.bad-in{background:var(--bad);border-color:var(--bad);color:#fff;}
 
+  /* ---- exam mode ---- */
+  .chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:.2rem 0 .3rem;}
+  .chip{font-family:var(--sans);font-size:.72rem;font-weight:600;background:var(--paper);
+    border:1px solid var(--line-strong);color:var(--ink-soft);border-radius:99px;padding:.22rem .6rem;}
+  .card.exam h4{font-family:var(--sans);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--accent-ink);margin:1.4rem 0 .55rem;}
+  .talk{margin:.3rem 0;padding-left:1.2rem;}
+  .talk li{margin:.45rem 0;}
+  .talk b{color:var(--ink);}
+  .qa{display:flex;flex-direction:column;gap:.5rem;}
+  .qa-item{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--paper);}
+  .qa-q{font-family:var(--sans);font-size:.93rem;font-weight:600;padding:.65rem .8rem;cursor:pointer;
+    display:flex;gap:.55rem;align-items:flex-start;color:var(--ink);border:0;width:100%;text-align:left;background:none;}
+  .qa-q:hover{color:var(--accent-ink);}
+  .qa-q .caret{color:var(--ink-faint);transition:transform .18s;line-height:1.4;}
+  .qa-item.open .qa-q .caret{transform:rotate(90deg);}
+  .qa-a{display:none;padding:0 .85rem .8rem 2.15rem;font-size:.97rem;color:var(--ink-soft);}
+  .qa-item.open .qa-a{display:block;animation:slide .25s ease;}
+  .qa-a b{color:var(--ink);}
+
   footer{margin-top:2.6rem;text-align:center;font-family:var(--sans);font-size:.8rem;color:var(--ink-faint);}
 </style>
 </head>
@@ -249,6 +269,7 @@
     </div>
     <nav class="nav">
       <button id="navHub" class="on">Lessons</button>
+      <button id="navExam">Exam</button>
       <button id="navCourses">Crash Courses</button>
       <a class="navlink" href="whiteboard.html">✎ Whiteboard ↗</a>
     </nav>
@@ -267,6 +288,11 @@
       <span class="ptext" id="ptext"></span>
     </div>
     <main id="app"></main>
+  </div>
+
+  <div id="view-exam" style="display:none">
+    <p class="intro">Your exam is <b>oral</b> — 20 minutes: you draw <b>one</b> of these four topics, present it for ~5 minutes, then field questions for ~10. Each card is a presentation skeleton plus the follow-ups examiners tend to ask, with links to the lessons behind the math.</p>
+    <div id="exam-body"></div>
   </div>
 
   <div id="view-courses" style="display:none">
@@ -1249,15 +1275,144 @@ function initPractice(widget, genFn){
 }
 selectCourse("matmul");
 
+/* ================= exam mode ================= */
+const EXAM=[
+{ n:1, title:"Performance specification & stability margins",
+  sub:["Stability","Poles ↔ dynamics","Adding a pole/zero","Phase, gain & vector margins"],
+  lessons:[2,6,7,12], courses:["eig"],
+  talk:[
+    `<b>What we specify.</b> Transient behaviour (rise time, overshoot, settling time), steady-state accuracy (error), and robustness (stability margins). These trade off against each other.`,
+    `<b>Stability.</b> A linear system is stable iff every closed-loop pole is in the open left half-plane (continuous) or strictly inside the unit circle (discrete). Poles = eigenvalues of A = roots of the characteristic polynomial.`,
+    `<b>Poles ↔ dynamics.</b> A dominant 2nd-order pair sits at −ζωₙ ± jωₙ√(1−ζ²). Damping ζ sets overshoot ( %OS = e^(−ζπ/√(1−ζ²)) ); ωₙ sets speed. Real part → decay rate (t_s ≈ 4/ζωₙ); the angle θ from the negative real axis gives ζ = cos θ. Poles near the imaginary axis are slow &amp; lightly damped — they dominate.`,
+    `<b>Adding a pole or zero.</b> A left-half-plane zero adds phase lead → faster, more overshoot, higher bandwidth (and can cancel a slow pole). An extra pole adds lag → slower, less bandwidth, smaller margins. A right-half-plane (non-minimum-phase) zero causes initial undershoot and hard bandwidth limits.`,
+    `<b>Margins (on the loop gain L = KG).</b> Gain crossover ω_gc: |L| = 1. Phase crossover ω_pc: ∠L = −180°. <b>Phase margin</b> = 180° + ∠L(ω_gc) — extra lag tolerable. <b>Gain margin</b> = 1/|L(ω_pc)| — extra gain tolerable. <b>Vector margin</b> = shortest distance from the Nyquist curve to −1 = 1/‖S‖∞ — one robustness number capturing simultaneous gain+phase error.`
+  ],
+  qa:[
+    {q:"How do you read the gain and phase margins off a Bode plot?",
+     a:`Phase margin at the <b>gain crossover</b> (|L| = 0 dB): PM = 180° + phase there. Gain margin at the <b>phase crossover</b> (phase = −180°): GM = −|L| in dB (how far the magnitude sits below 0 dB). Both positive ⇒ stable with margin.`},
+    {q:"What is the vector margin and why might you prefer it?",
+     a:`It's the shortest distance from the Nyquist curve to the critical point −1, equal to 1/max_ω|S(jω)|. GM and PM only measure along the real axis and the unit circle separately — a loop can have healthy GM <i>and</i> PM yet still pass very close to −1 under a combined gain+phase perturbation. The vector margin catches that in a single number; larger is more robust.`},
+    {q:"How does a pole close to the imaginary axis affect the response?",
+     a:`It's a dominant, slow, lightly-damped mode: slower settling, more oscillation, lower bandwidth. The closer to the axis, the more it dominates the transient.`},
+    {q:"Minimum- vs non-minimum-phase zero?",
+     a:`A left-half-plane (minimum-phase) zero adds phase lead and speeds the response. A right-half-plane (non-minimum-phase) zero adds phase lag and produces initial undershoot, which fundamentally limits the achievable bandwidth.`},
+    {q:"Rough link between phase margin and overshoot?",
+     a:`Higher PM ⇒ more damping ⇒ less overshoot. A common rule of thumb is ζ ≈ PM/100 (for PM up to ~60°), so e.g. PM ≈ 45–60° gives a well-damped response.`}
+  ]},
+{ n:2, title:"The PID controller",
+  sub:["How it works","Stability","Anti-windup","Reference tracking & steady-state error"],
+  lessons:[3,4,8], courses:["eig"],
+  talk:[
+    `<b>Structure.</b> C(s) = Kp + Ki/s + Kd·s, driven by the error e = r − y. Output u = Kp·e + Ki·∫e dt + Kd·de/dt — present, accumulated, and predicted error.`,
+    `<b>P.</b> Proportional to current error: faster response and smaller (but non-zero) steady-state error. Too much Kp → oscillation and eventually instability.`,
+    `<b>I.</b> Integrates the error: adds a pole at the origin (raises system type) → drives steady-state error to zero for a step. Cost: added phase lag (can destabilise) and integrator windup.`,
+    `<b>D.</b> Acts on the rate of change: adds phase lead / damping, improving the transient and stability margins. Cost: amplifies measurement noise, so it's used with a filter, Kd·s/(τ_f s + 1).`,
+    `<b>Anti-windup.</b> When the actuator saturates, the integrator keeps accumulating → large overshoot on recovery. Back-calculation feeds (u_sat − u)/T_t into the integrator so it stops winding up and tracks the achievable output.`,
+    `<b>Reference tracking & steady-state error.</b> Integral action ⇒ zero steady-state error to a step. Alternatively a feedforward gain F = 1/G(0) cancels the steady-state error using the plant DC gain. Use the final value theorem e_ss = lim_{s→0} s·E(s) to check.`
+  ],
+  qa:[
+    {q:"Why does integral action remove steady-state error?",
+     a:`It puts an open-loop pole at s = 0, so the loop gain → ∞ at DC. By the final value theorem the steady-state error to a step becomes zero. It raises the system type by one.`},
+    {q:"What is windup, and how does back-calculation cure it?",
+     a:`While the actuator is saturated the error persists, so the integrator keeps growing far beyond what's useful, causing big overshoot when it finally unwinds. Back-calculation subtracts the saturation error (u_sat − u), scaled by 1/T_t, from the integrator input, so the integral state stays consistent with the real (saturated) output.`},
+    {q:"Downside of derivative action?",
+     a:`The differentiator's gain rises with frequency, so it amplifies high-frequency measurement noise. Mitigate with a filtered derivative Kd·s/(τ_f s + 1), and/or derivative-on-measurement instead of on error.`},
+    {q:"Steady-state error of a P-only controller to a step?",
+     a:`Non-zero: e_ss = 1/(1 + Kp·G(0)). Raising Kp shrinks it but never eliminates it — you need integral action or feedforward for zero error.`},
+    {q:"How does each term affect stability?",
+     a:`Increasing Kp moves closed-loop poles toward the right (eventually unstable). Ki adds phase lag (destabilising). Kd adds phase lead / damping (stabilising, within noise limits). Analyse with the closed-loop characteristic equation, a root locus, or the margins.`}
+  ]},
+{ n:3, title:"Controller design using root locus",
+  sub:["Meaning","Application","Stability","Performance"],
+  lessons:[5], courses:["eig"],
+  talk:[
+    `<b>What it is.</b> The root locus plots the closed-loop pole locations as a parameter (usually gain K) sweeps 0 → ∞ — i.e. the roots of 1 + K·L(s) = 0. It shows how the dynamics change with that parameter.`,
+    `<b>Sketching rules.</b> Branches start at open-loop poles (K = 0) and end at open-loop zeros or at infinity. On the real axis the locus lies to the left of an odd number of poles+zeros. There are n − m asymptotes at angles (2k+1)·180°/(n−m) meeting at the centroid (Σpoles − Σzeros)/(n−m); breakaway points solve dK/ds = 0.`,
+    `<b>Application / design.</b> To hit a target damping ζ, draw the radial line at θ = cos⁻¹ζ from the negative real axis; its intersection with the locus is the design pole, and the magnitude condition gives the K there. Compensators reshape the locus: a lead (a zero + farther pole) pulls it left (faster, better damped); a lag improves steady-state error with little effect on the dominant poles.`,
+    `<b>Stability.</b> Any portion of the locus in the right half-plane marks an unstable range of K; the imaginary-axis crossing (Routh, or substitute s = jω) gives the critical gain.`,
+    `<b>Performance.</b> The locus reveals the achievable ζ and ωₙ; with the dominant-pole approximation you read off overshoot and settling time.`
+  ],
+  qa:[
+    {q:"What information does the root locus give you?",
+     a:`How the closed-loop poles move as the gain (or another parameter) varies, so you can pick the value that places the dominant poles for the dynamics you want.`},
+    {q:"How do you choose K for a target damping ratio?",
+     a:`Draw the constant-ζ line at angle θ = cos⁻¹ζ from the negative real axis. Where it crosses the locus is the closed-loop pole; the magnitude condition |K·L(s)| = 1 evaluated there gives the required K.`},
+    {q:"Where do the branches start and end?",
+     a:`They start at the open-loop poles (K = 0) and end at the open-loop zeros (K → ∞); n − m branches run off to infinity along the asymptotes.`},
+    {q:"How does a lead compensator change the locus?",
+     a:`It adds a zero (and a farther-left pole), which pulls the locus to the left — giving faster, better-damped closed-loop poles and larger stability margins.`},
+    {q:"How do you find the gain at which it goes unstable?",
+     a:`Find the imaginary-axis crossing: apply Routh–Hurwitz to 1 + K·L(s), or substitute s = jω and solve the real and imaginary parts for the critical K and frequency.`}
+  ]},
+{ n:4, title:"State-space control",
+  sub:["Stability","State feedback","Observer design","Reference tracking"],
+  lessons:[9,10,11,12], courses:["eig","matmul","detrank"],
+  talk:[
+    `<b>Model &amp; stability.</b> ẋ = Ax + Bu, y = Cx. The eigenvalues of A are the poles: stable iff all have negative real part (or lie inside the unit circle, discrete).`,
+    `<b>Controllability / observability.</b> (A,B) is controllable iff 𝒞 = [B AB … Aⁿ⁻¹B] has full rank → every pole can be placed by state feedback. (A,C) is observable iff 𝒪 = [C; CA; … ; CAⁿ⁻¹] has full rank → the state can be reconstructed from the output. The two are dual.`,
+    `<b>State feedback.</b> u = −Fx gives closed loop A − BF; choose F (pole placement / Ackermann, easiest in controllable canonical form) to place the closed-loop eigenvalues at the desired poles.`,
+    `<b>Observer.</b> When x isn't measured, estimate it: x̂̇ = Ax̂ + Bu + L(y − Cx̂). The error obeys A − LC; pick L to place the observer poles (typically 2–5× faster than the controller). Design is dual to state feedback.`,
+    `<b>Observer-based control &amp; separation.</b> Output feedback u = −Fx̂ gives closed-loop poles = eig(A − BF) ∪ eig(A − LC) — the separation principle lets you design F and L independently.`,
+    `<b>Reference tracking.</b> Plain feedback regulates to zero; to track r add a reference gain u = −Fx̂ + Nr with N chosen for unit DC gain, or augment the state with an integral of (y − r) for zero steady-state error that's robust to model error.`
+  ],
+  qa:[
+    {q:"What condition lets you place all poles with state feedback?",
+     a:`The pair (A,B) must be controllable — the controllability matrix 𝒞 = [B AB … Aⁿ⁻¹B] must have full rank n.`},
+    {q:"State the separation principle.",
+     a:`For observer-based output feedback, the closed-loop eigenvalues split into the state-feedback set eig(A − BF) and the observer set eig(A − LC). You can design the controller gain F and the observer gain L completely independently.`},
+    {q:"How fast should the observer be relative to the controller?",
+     a:`Faster — observer poles roughly 2–5× further into the left half-plane — so the estimate converges before it affects control. Not arbitrarily fast, since a very fast observer amplifies measurement noise.`},
+    {q:"Two ways to get zero steady-state tracking error?",
+     a:`(1) A reference feedforward gain N set for unit DC gain — simple but model-dependent, not robust to parameter error. (2) Integral action: augment the state with x_I = ∫(y − r) and feed it back — robust to model error and constant disturbances.`},
+    {q:"Difference between controllability and observability?",
+     a:`Controllability = the input can steer every state; observability = the output reveals every state. They're mathematically dual: (A,C) is observable exactly when (Aᵀ,Cᵀ) is controllable.`}
+  ]},
+];
+
+const examBody=document.getElementById("exam-body");
+function renderExam(){
+  examBody.innerHTML="";
+  EXAM.forEach(t=>{
+    const card=document.createElement("section");
+    card.className="card exam";
+    const chips=t.sub.map(s=>`<span class="chip">${s}</span>`).join("");
+    const talk=t.talk.map(x=>`<li>${x}</li>`).join("");
+    const qa=t.qa.map(p=>`<div class="qa-item"><button class="qa-q"><span class="caret">▸</span><span>${p.q}</span></button><div class="qa-a">${p.a}</div></div>`).join("");
+    const lessons=t.lessons.map(n=>`<a data-lesson="${n}">Lesson ${n} →</a>`).join("");
+    const courses=(t.courses||[]).map(id=>`<a data-course="${id}">${COURSE_NAME[id]} →</a>`).join("");
+    card.innerHTML=`
+      <div class="qhead"><span class="qnum">${t.n}</span>
+        <div><span class="topic">Drawable topic ${t.n}</span><h2 class="qtitle">${t.title}</h2></div></div>
+      <div class="chips">${chips}</div>
+      <h4>Present it — about 5 minutes</h4>
+      <ol class="talk">${talk}</ol>
+      <h4>Likely follow-up questions</h4>
+      <div class="qa">${qa}</div>
+      <h4>Study the underlying math</h4>
+      <div class="brush">${lessons}${courses}</div>`;
+    examBody.appendChild(card);
+    card.querySelectorAll(".qa-item").forEach(it=>
+      it.querySelector(".qa-q").addEventListener("click",()=>it.classList.toggle("open")));
+    card.querySelectorAll(".brush a[data-lesson]").forEach(a=>
+      a.addEventListener("click",()=>openLesson(+a.dataset.lesson)));
+    card.querySelectorAll(".brush a[data-course]").forEach(a=>
+      a.addEventListener("click",()=>goCourse(a.dataset.course)));
+  });
+}
+renderExam();
+
 /* ================= views ================= */
-const views={hub:document.getElementById("view-hub"),lesson:document.getElementById("view-lesson"),courses:document.getElementById("view-courses")};
-const navHub=document.getElementById("navHub"), navCourses=document.getElementById("navCourses");
+const views={hub:document.getElementById("view-hub"),lesson:document.getElementById("view-lesson"),
+  exam:document.getElementById("view-exam"),courses:document.getElementById("view-courses")};
+const navHub=document.getElementById("navHub"), navExam=document.getElementById("navExam"), navCourses=document.getElementById("navCourses");
 function showView(which){
   Object.entries(views).forEach(([k,el])=>el.style.display=(k===which)?"":"none");
   navHub.classList.toggle("on",which==="hub"||which==="lesson");
+  navExam.classList.toggle("on",which==="exam");
   navCourses.classList.toggle("on",which==="courses");
 }
 navHub.addEventListener("click",()=>{ renderHub(); showView("hub"); });
+navExam.addEventListener("click",()=>{ showView("exam"); window.scrollTo({top:0,behavior:"smooth"}); });
 navCourses.addEventListener("click",()=>showView("courses"));
 function goCourse(id){showView("courses");selectCourse(id);window.scrollTo({top:0,behavior:"smooth"});}
 
