@@ -62,6 +62,7 @@
   <div class="grp">
     <button class="tbtn on" id="tPen" title="Pen (P)">✎</button>
     <button class="tbtn" id="tErase" title="Eraser (E)">⌫</button>
+    <button class="tbtn" id="tPan" title="Pan / drag the board (H, or hold Space)">✋</button>
   </div>
   <div class="grp" id="colors"></div>
   <div class="grp">
@@ -74,6 +75,7 @@
     <button class="tbtn" id="clear" title="Clear all">🗑</button>
   </div>
   <div class="grp">
+    <button class="tbtn" id="resetView" title="Reset view (re-center)">⊙</button>
     <button class="tbtn on" id="tGrid" title="Toggle grid">▦</button>
     <button class="tbtn" id="tTheme" title="Light / dark board">◐</button>
     <button class="tbtn" id="save" title="Save as PNG">⭳</button>
@@ -81,7 +83,7 @@
 </div>
 
 <a class="home" href="index.html">← Study tool</a>
-<div class="hint">Draw with mouse, touch, or stylus. <b>P</b> pen · <b>E</b> eraser · <b>Ctrl+Z</b> undo · grid helps for pole plots &amp; Bode sketches.</div>
+<div class="hint">Draw with mouse, touch, or stylus. <b>P</b> pen · <b>E</b> eraser · <b>H</b> / hold <b>Space</b> to pan · <b>⊙</b> re-centers · <b>Ctrl+Z</b> undo. The board is infinite — drag to make more room.</div>
 
 <script>
 const gridCanvas=document.getElementById("grid");
@@ -98,6 +100,9 @@ let strokes=[];      // committed strokes
 let redoStack=[];
 let current=null;    // stroke in progress
 let dpr=Math.max(1, window.devicePixelRatio||1);
+let ox=0, oy=0;          // pan offset in CSS px: screen = world + offset
+let spaceHeld=false;
+function applyDrawTransform(){ dctx.setTransform(dpr,0,0,dpr, ox*dpr, oy*dpr); }
 
 /* ---------- sizing / hi-dpi ---------- */
 function resize(){
@@ -105,7 +110,7 @@ function resize(){
   const w=window.innerWidth, h=window.innerHeight;
   [gridCanvas,drawCanvas].forEach(c=>{ c.width=Math.round(w*dpr); c.height=Math.round(h*dpr); });
   gctx.setTransform(dpr,0,0,dpr,0,0);
-  dctx.setTransform(dpr,0,0,dpr,0,0);
+  applyDrawTransform();
   drawGrid();
   redrawStrokes();
 }
@@ -119,11 +124,13 @@ function drawGrid(){
   gctx.fillRect(0,0,w,h);
   if(!state.grid) return;
   const step=28;
+  const px=((ox % step)+step)%step;   // shift grid with the pan for an "infinite paper" feel
+  const py=((oy % step)+step)%step;
   gctx.strokeStyle=getVar("--grid");
   gctx.lineWidth=1;
   gctx.beginPath();
-  for(let x=step*0.5;x<w;x+=step){ gctx.moveTo(x,0); gctx.lineTo(x,h); }
-  for(let y=step*0.5;y<h;y+=step){ gctx.moveTo(0,y); gctx.lineTo(w,y); }
+  for(let x=px;x<w;x+=step){ gctx.moveTo(x,0); gctx.lineTo(x,h); }
+  for(let y=py;y<h;y+=step){ gctx.moveTo(0,y); gctx.lineTo(w,y); }
   gctx.stroke();
 }
 function getVar(n){ return getComputedStyle(root).getPropertyValue(n).trim(); }
@@ -161,17 +168,32 @@ function renderStroke(s){
   dctx.lineTo(p[p.length-1].x,p[p.length-1].y);
   dctx.stroke();
 }
+function clearDraw(){
+  dctx.save();
+  dctx.setTransform(1,0,0,1,0,0);
+  dctx.clearRect(0,0,drawCanvas.width,drawCanvas.height);
+  dctx.restore();
+}
 function redrawStrokes(){
-  const w=window.innerWidth,h=window.innerHeight;
-  dctx.clearRect(0,0,w,h);
+  clearDraw();
   strokes.forEach(renderStroke);
   dctx.globalCompositeOperation="source-over";
 }
 
 /* ---------- pointer handling ---------- */
-let drawing=false;
-function pos(e){ return {x:e.clientX, y:e.clientY}; }
+let drawing=false, panning=false, panStart=null;
+function pos(e){ return {x:e.clientX - ox, y:e.clientY - oy}; }   // screen → world
+function isPanGesture(e){ return state.tool==="pan" || spaceHeld || (e.pointerType==="mouse" && e.button===1); }
+function applyCursor(){
+  drawCanvas.style.cursor = (state.tool==="pan"||spaceHeld) ? "grab" : (state.tool==="eraser" ? "cell" : "crosshair");
+}
 function down(e){
+  if(isPanGesture(e)){
+    panning=true; panStart={x:e.clientX,y:e.clientY,ox,oy};
+    drawCanvas.setPointerCapture(e.pointerId);
+    drawCanvas.style.cursor="grabbing"; e.preventDefault();
+    return;
+  }
   if(e.button!==undefined && e.button!==0 && e.pointerType==="mouse") return;
   drawing=true;
   drawCanvas.setPointerCapture(e.pointerId);
@@ -183,15 +205,22 @@ function down(e){
   dctx.globalCompositeOperation="source-over";
 }
 function move(e){
+  if(panning){
+    ox=panStart.ox + (e.clientX - panStart.x);
+    oy=panStart.oy + (e.clientY - panStart.y);
+    applyDrawTransform(); drawGrid(); redrawStrokes();
+    return;
+  }
   if(!drawing) return;
   const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
   for(const ev of evs) current.points.push(pos(ev));
-  // incremental: redraw just this stroke over existing by re-rendering all is simplest & crisp
+  // re-rendering all each move keeps lines crisp
   redrawStrokes();
   renderStroke(current);
   dctx.globalCompositeOperation="source-over";
 }
 function up(){
+  if(panning){ panning=false; applyCursor(); return; }
   if(!drawing) return;
   drawing=false;
   if(current && current.points.length){ strokes.push(current); }
@@ -208,10 +237,14 @@ function setTool(t){
   state.tool=t;
   document.getElementById("tPen").classList.toggle("on",t==="pen");
   document.getElementById("tErase").classList.toggle("on",t==="eraser");
-  drawCanvas.style.cursor = t==="eraser" ? "cell" : "crosshair";
+  document.getElementById("tPan").classList.toggle("on",t==="pan");
+  applyCursor();
 }
 document.getElementById("tPen").onclick=()=>setTool("pen");
 document.getElementById("tErase").onclick=()=>setTool("eraser");
+document.getElementById("tPan").onclick=()=>setTool("pan");
+function resetView(){ ox=0; oy=0; applyDrawTransform(); drawGrid(); redrawStrokes(); }
+document.getElementById("resetView").onclick=resetView;
 
 const colorsEl=document.getElementById("colors");
 function buildPalette(){
@@ -265,8 +298,13 @@ window.addEventListener("keydown",e=>{
   const k=e.key.toLowerCase();
   if((e.ctrlKey||e.metaKey)&&k==="z"){ e.preventDefault(); e.shiftKey?redo():undo(); return; }
   if((e.ctrlKey||e.metaKey)&&k==="y"){ e.preventDefault(); redo(); return; }
+  if(e.code==="Space"||k===" "){ if(!spaceHeld){ spaceHeld=true; applyCursor(); } e.preventDefault(); return; }
   if(k==="p") setTool("pen");
   if(k==="e") setTool("eraser");
+  if(k==="h") setTool("pan");
+});
+window.addEventListener("keyup",e=>{
+  if(e.code==="Space"||e.key===" "){ spaceHeld=false; applyCursor(); }
 });
 
 /* meta theme-color element (ensure present) */
