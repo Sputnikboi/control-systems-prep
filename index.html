@@ -1180,7 +1180,14 @@ const COURSES={
     <p>A = ${mat([["0","1"],["0","0"]])} (α = 0, β = 0), B = ${mat([["0"],["1"]])}, target poles −2 and −3.</p>
     <p>Desired: (s+2)(s+3) = s² + 5s + 6, so p₁+p₂ = −5 and p₁p₂ = 6.</p>
     <p>f₂ = (−5) − 0 = <b>−5</b>; &nbsp; f₁ = −(6) − 0 = <b>−6</b> &nbsp;⇒&nbsp; <mark>F = [−6  −5]</mark>.</p>
-    <p>Check: A + BF = ${mat([["0","1"],["−6","−5"]])} ⇒ s² + 5s + 6 ⇒ poles −2, −3 ✓.</p>`,
+    <p>Check: A + BF = ${mat([["0","1"],["−6","−5"]])} ⇒ s² + 5s + 6 ⇒ poles −2, −3 ✓.</p>
+
+    <h3>When the target poles are complex</h3>
+    <p>Complex poles always come as a <b>conjugate pair</b> σ ± ωj, and multiplying the pair back out kills the j — you get a <i>real</i> quadratic:</p>
+    <div class="key">(s − (σ+ωj))(s − (σ−ωj)) = s² − 2σ·s + (σ² + ω²)</div>
+    <p>So the <b>sum</b> of the poles is 2σ (twice the real part) and the <b>product</b> is σ²+ω² — both real. Feed those into the same recipe; nothing else changes, and <b>F still comes out real</b>.</p>
+    <p><b>Example:</b> place the poles at −2 ± 2j on A = ${mat([["0","1"],["−2","−3"]])} (α = −2, β = −3). Here σ = −2, ω = 2 ⇒ sum = 2σ = −4, product = σ²+ω² = 4+4 = 8. Then f₂ = (−4) − (−3) = <b>−1</b>, f₁ = −(8) − (−2) = <b>−6</b> ⇒ <mark>F = [−6  −1]</mark>.</p>
+    <p class="rule">If a question gives damping ζ and natural frequency ωₙ instead of σ ± ωj, the desired polynomial is s² + 2ζωₙ·s + ωₙ² — same idea, already real. And to go the other way (quadratic → roots), the quadratic formula with a negative discriminant gives √(negative) = j·√(positive).</p>`,
   gen:genFeedback }
 };
 
@@ -1286,19 +1293,33 @@ function genEig(){
 }
 function genFeedback(){
   const al=randInt(-3,3), be=randInt(-3,3);      // A = [[0,1],[al,be]], B = [0;1]
-  const p1=randInt(-5,-1), p2=randInt(-5,-1);    // target poles (stable integers)
-  const sum=p1+p2, prod=p1*p2;
+  let sum, prod, poleText, desiredText, note;
+  if(Math.random()<0.5){
+    // complex conjugate target pair σ ± ωj
+    const sig=randInt(-4,-1), om=randInt(1,3);
+    sum=2*sig; prod=sig*sig+om*om;
+    poleText=`${fmt(sig)} ± ${om}j`;
+    desiredText=`(s−(${fmt(sig)}+${om}j))(s−(${fmt(sig)}−${om}j)) = s² + ${fmt(-sum)}s + ${fmt(prod)}`;
+    note=`conjugate pair σ ± ωj with σ = ${fmt(sig)}, ω = ${om}: sum = 2σ = ${fmt(sum)}, product = σ²+ω² = ${fmt(prod)} — both real, no j`;
+  }else{
+    // two real integer target poles
+    const p1=randInt(-5,-1), p2=randInt(-5,-1);
+    sum=p1+p2; prod=p1*p2;
+    poleText=`${fmt(p1)} and ${fmt(p2)}`;
+    desiredText=`(s−(${fmt(p1)}))(s−(${fmt(p2)})) = s² + ${fmt(-sum)}s + ${fmt(prod)}`;
+    note=`p₁+p₂ = ${fmt(sum)}, p₁p₂ = ${fmt(prod)}`;
+  }
   const f1=-prod-al, f2=sum-be;
   return {
     html:`<div class="eq">
       <div class="eqline">A = ${matNum([[0,1],[al,be]])} &nbsp; B = ${matNum([[0],[1]])}</div>
-      <div class="eqline" style="margin-top:.5rem">place the closed-loop poles at <b>${fmt(p1)}</b> and <b>${fmt(p2)}</b></div>
+      <div class="eqline" style="margin-top:.5rem">place the closed-loop poles at <b>${poleText}</b></div>
       <div class="eqline" style="margin-top:.5rem">F = ${matIn(1,2)}</div></div>`,
     steps:`<ol>
-      <li>Desired polynomial: (s−(${fmt(p1)}))(s−(${fmt(p2)})) = s² + ${fmt(-sum)}s + ${fmt(prod)} &nbsp;(so p₁+p₂ = ${fmt(sum)}, p₁p₂ = ${fmt(prod)}).</li>
+      <li>Desired polynomial: ${desiredText} &nbsp;(${note}).</li>
       <li>A + BF = ${mat([["0","1"],[fmt(al)+"+f₁",fmt(be)+"+f₂"]],true)} ⇒ char. poly = s² − (${fmt(be)}+f₂)s − (${fmt(al)}+f₁).</li>
-      <li>f₂ = (p₁+p₂) − β = ${fmt(sum)} − (${fmt(be)}) = <b>${fmt(f2)}</b>; &nbsp; f₁ = −(p₁p₂) − α = −(${fmt(prod)}) − (${fmt(al)}) = <b>${fmt(f1)}</b>.</li>
-      <li>⇒ F = [ ${fmt(f1)} &nbsp; ${fmt(f2)} ].</li></ol>`,
+      <li>Match: f₂ = (sum) − β = ${fmt(sum)} − (${fmt(be)}) = <b>${fmt(f2)}</b>; &nbsp; f₁ = −(product) − α = −(${fmt(prod)}) − (${fmt(al)}) = <b>${fmt(f1)}</b>.</li>
+      <li>⇒ F = [ ${fmt(f1)} &nbsp; ${fmt(f2)} ] &nbsp;(real, even though the poles are complex).</li></ol>`,
     check:root=>compareCells(root,[f1,f2])
   };
 }
