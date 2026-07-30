@@ -388,7 +388,7 @@ const ssDia = svg(470,150,
 );
 
 /* ================= crash-course names ================= */
-const COURSE_NAME={matmul:"Matrix multiplication",detrank:"Determinant & rank",eig:"Eigenvalues"};
+const COURSE_NAME={matmul:"Matrix multiplication",detrank:"Determinant & rank",eig:"Eigenvalues",feedback:"State feedback"};
 
 /* ================= LESSONS ================= */
 const LESSONS=[
@@ -821,7 +821,7 @@ const LESSONS=[
       <li>𝒞 = ${mat([["1","−1"],["1","−2"]])}, det = (1)(−2) − (−1)(1) = −1 ≠ 0.</li></ol>
       <div class="answer"><b>Controllable.</b> Diagonal with <i>distinct</i> eigenvalues (−1, −2) and both B-entries non-zero. (If the eigenvalues were equal — e.g. both −1 — 𝒞 would be singular and it would <i>not</i> be controllable.)</div>`,
   },
-  { topic:"Pole placement — double integrator", brush:["eig","matmul"],
+  { topic:"Pole placement — double integrator", brush:["feedback","eig"],
     prompt:`<p>For</p>${ss(mat([["0","1"],["0","0"]]),mat([["0"],["1"]]),mat([["1","0"]]))}<p>find state feedback u = Fx = [f₁ f₂]x so the closed-loop poles are −2 and −3.</p>`,
     hints:[
       `Desired characteristic polynomial: (s+2)(s+3) = s² + 5s + 6.`,
@@ -832,7 +832,7 @@ const LESSONS=[
       <li>Match s² + 5s + 6: −f₂ = 5 ⇒ f₂ = −5; −f₁ = 6 ⇒ f₁ = −6.</li></ol>
       <div class="answer"><b>F = [ −6  −5 ].</b> Check: A+BF = [[0,1],[−6,−5]] ⇒ s²+5s+6 = (s+2)(s+3) ✓.</div>`,
   },
-  { topic:"Pole placement — complex targets", brush:["eig","matmul"],
+  { topic:"Pole placement — complex targets", brush:["feedback","eig"],
     prompt:`<p>For</p>${ss(mat([["0","1"],["−2","−3"]]),mat([["0"],["1"]]),mat([["0","1"]]))}<p>find F = [f₁ f₂] so the closed-loop poles are −2 ± 2j (char. poly s² + 4s + 8).</p>`,
     hints:[
       `A + BF = [[0,1],[−2+f₁, −3+f₂]].`,
@@ -880,7 +880,7 @@ const LESSONS=[
       <li>−1 − L = −5 ⇒ L = 4.</li></ol>
       <div class="answer"><b>L = 4</b>, giving ė = −5e (error decays like e⁻⁵ᵗ).</div>`,
   },
-  { topic:"Closed-loop eigenvalues", brush:["matmul","eig"],
+  { topic:"Closed-loop eigenvalues", brush:["feedback","eig"],
     prompt:`${ss(mat([["1","2"],["2","1"]]),mat([["1"],["1"]]),"C")}<p>with state feedback u = [−2 −2]x. What are the closed-loop eigenvalues?</p>`,
     hints:[
       `Closed loop: ẋ = (A + BK)x. Find A + BK.`,
@@ -1156,7 +1156,32 @@ const COURSES={
 
     <h3>Where it shows up in the test</h3>
     <p>• System stability = eigenvalues of <b>A</b>. &nbsp;• Observer poles = eigenvalues of <b>A − LC</b>. &nbsp;• State-feedback poles = eigenvalues of <b>A + BF</b>.</p>`,
-  gen:genEig }
+  gen:genEig },
+ feedback:{
+  name:"State feedback (pole placement)", tag:"Choosing where the closed-loop poles go",
+  concept:`
+    <h3>What state feedback does</h3>
+    <p>State feedback feeds the whole state back into the input: <b>u = Fx</b>. That turns the open loop ẋ = Ax + Bu into the closed loop</p>
+    <div class="key">ẋ = (A + BF) x</div>
+    <p>The new poles are the <b>eigenvalues of A + BF</b>, and you pick the row F = [f₁ f₂] to put them wherever you want — stable, faster, better damped. This is <b>pole placement</b>, and it's exactly what <b>controllability</b> guarantees you can do.</p>
+
+    <h3>The easy case: B = [0 ; 1]</h3>
+    <p>When A is in <b>controllable canonical form</b>, A = ${mat([["0","1"],["α","β"]],true)}, B = ${mat([["0"],["1"]])}, the feedback only changes the bottom row:</p>
+    <div class="key">A + BF = ${mat([["0","1"],["α+f₁","β+f₂"]],true)} &nbsp;⟶&nbsp; char. poly &nbsp; s² − (β+f₂)·s − (α+f₁)</div>
+
+    <h3>The recipe</h3>
+    <p><b>Step 1.</b> Turn the target poles p₁, p₂ into a polynomial: (s−p₁)(s−p₂) = s² − (p₁+p₂)s + p₁p₂.<br>
+       <b>Step 2.</b> Set it equal to s² − (β+f₂)s − (α+f₁).<br>
+       <b>Step 3.</b> Match the two coefficients:</p>
+    <div class="key">f₂ = (p₁+p₂) − β &nbsp;&nbsp;&nbsp;&nbsp; f₁ = −(p₁·p₂) − α</div>
+    <p class="rule">Convention: this uses u = Fx and A + BF, as in your Lesson 9–10 tests. If your notes use u = −Fx / A − BF, the numbers just flip sign. The shortcut assumes B = [0;1] — for a general (A,B) you first transform to controllable canonical form (or use Ackermann's formula).</p>
+
+    <h3>Worked example</h3>
+    <p>A = ${mat([["0","1"],["0","0"]])} (α = 0, β = 0), B = ${mat([["0"],["1"]])}, target poles −2 and −3.</p>
+    <p>Desired: (s+2)(s+3) = s² + 5s + 6, so p₁+p₂ = −5 and p₁p₂ = 6.</p>
+    <p>f₂ = (−5) − 0 = <b>−5</b>; &nbsp; f₁ = −(6) − 0 = <b>−6</b> &nbsp;⇒&nbsp; <mark>F = [−6  −5]</mark>.</p>
+    <p>Check: A + BF = ${mat([["0","1"],["−6","−5"]])} ⇒ s² + 5s + 6 ⇒ poles −2, −3 ✓.</p>`,
+  gen:genFeedback }
 };
 
 function genMatMul(){
@@ -1257,6 +1282,24 @@ function genEig(){
       ins.forEach((el,i)=>{el.classList.toggle("good-in",matched[i]);el.classList.toggle("bad-in",!matched[i]);});
       return t.length===0 && matched.every(Boolean);
     }
+  };
+}
+function genFeedback(){
+  const al=randInt(-3,3), be=randInt(-3,3);      // A = [[0,1],[al,be]], B = [0;1]
+  const p1=randInt(-5,-1), p2=randInt(-5,-1);    // target poles (stable integers)
+  const sum=p1+p2, prod=p1*p2;
+  const f1=-prod-al, f2=sum-be;
+  return {
+    html:`<div class="eq">
+      <div class="eqline">A = ${matNum([[0,1],[al,be]])} &nbsp; B = ${matNum([[0],[1]])}</div>
+      <div class="eqline" style="margin-top:.5rem">place the closed-loop poles at <b>${fmt(p1)}</b> and <b>${fmt(p2)}</b></div>
+      <div class="eqline" style="margin-top:.5rem">F = ${matIn(1,2)}</div></div>`,
+    steps:`<ol>
+      <li>Desired polynomial: (s−(${fmt(p1)}))(s−(${fmt(p2)})) = s² + ${fmt(-sum)}s + ${fmt(prod)} &nbsp;(so p₁+p₂ = ${fmt(sum)}, p₁p₂ = ${fmt(prod)}).</li>
+      <li>A + BF = ${mat([["0","1"],[fmt(al)+"+f₁",fmt(be)+"+f₂"]],true)} ⇒ char. poly = s² − (${fmt(be)}+f₂)s − (${fmt(al)}+f₁).</li>
+      <li>f₂ = (p₁+p₂) − β = ${fmt(sum)} − (${fmt(be)}) = <b>${fmt(f2)}</b>; &nbsp; f₁ = −(p₁p₂) − α = −(${fmt(prod)}) − (${fmt(al)}) = <b>${fmt(f1)}</b>.</li>
+      <li>⇒ F = [ ${fmt(f1)} &nbsp; ${fmt(f2)} ].</li></ol>`,
+    check:root=>compareCells(root,[f1,f2])
   };
 }
 
