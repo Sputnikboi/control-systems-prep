@@ -276,6 +276,28 @@
   .gbanner.lose{background:var(--bad-soft);color:var(--bad);}
   .gbanner.neutral{background:var(--accent-soft);color:var(--accent-ink);}
   .gctrl{display:flex;gap:.55rem;flex-wrap:wrap;margin-top:.7rem;}
+  .gstepwrap{display:flex;flex-direction:column;}
+  .dcaret{font-family:var(--sans);font-size:.72rem;font-weight:700;color:var(--accent-ink);
+    margin-left:auto;white-space:nowrap;padding-top:.15rem;padding-left:.5rem;}
+  .gdetail{border:1px solid var(--line);border-top:0;border-radius:0 0 10px 10px;background:var(--accent-soft);
+    padding:.6rem .85rem .7rem;font-size:.92rem;color:var(--ink);animation:slide .2s ease;}
+  .gdetail ol{margin:.2rem 0;padding-left:1.15rem;} .gdetail li{margin:.35rem 0;}
+  .gdetail b{font-variant-numeric:tabular-nums;}
+
+  /* ---- visuals (root locus / bode) ---- */
+  .viz{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:clamp(1rem,3vw,1.5rem);margin-top:1.2rem;box-shadow:var(--shadow);}
+  .vizrow{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;font-family:var(--sans);
+    font-size:.9rem;color:var(--ink-soft);margin:.5rem 0;}
+  .vizrow select{font-family:var(--mono);font-size:.9rem;padding:.35rem .5rem;border:1px solid var(--line-strong);
+    border-radius:8px;background:var(--paper);color:var(--ink);max-width:100%;}
+  .vizrow input[type=range]{flex:1;min-width:7rem;accent-color:var(--accent);cursor:pointer;}
+  .plot{width:100%;height:380px;display:block;background:var(--paper);border:1px solid var(--line);
+    border-radius:12px;touch-action:none;}
+  .plot.tall{height:470px;}
+  .readout{font-family:var(--sans);font-size:.9rem;color:var(--ink-soft);margin-top:.7rem;min-height:1.3em;line-height:1.6;}
+  .readout b{font-variant-numeric:tabular-nums;}
+  .vizhint{font-family:var(--sans);font-size:.82rem;color:var(--ink-faint);margin:.5rem 0 0;line-height:1.5;}
 
   footer{margin-top:2.6rem;text-align:center;font-family:var(--sans);font-size:.8rem;color:var(--ink-faint);}
 </style>
@@ -295,6 +317,7 @@
     <nav class="nav">
       <button id="navHub" class="on">Lessons</button>
       <button id="navGame">Bug Hunt</button>
+      <button id="navViz">Visuals</button>
       <button id="navExam">Exam</button>
       <button id="navCourses">Crash Courses</button>
       <a class="navlink" href="whiteboard.html">✎ Whiteboard ↗</a>
@@ -329,6 +352,15 @@
       <div class="stat"><span class="n" id="gBest">0</span><span class="l">Best streak</span></div>
     </div>
     <div id="game-body"></div>
+  </div>
+
+  <div id="view-viz" style="display:none">
+    <p class="intro">Interactive versions of the graphical lessons. Drag the gain and watch the closed-loop poles travel the root locus, or move across a Bode plot to read magnitude, phase, and the stability margins.</p>
+    <div class="pills" id="vizpills">
+      <button class="pill on" data-v="locus">Root locus</button>
+      <button class="pill" data-v="bode">Bode plot</button>
+    </div>
+    <div id="viz-body"></div>
   </div>
 
   <div id="view-courses" style="display:none">
@@ -1546,11 +1578,14 @@ function gMV(){
     steps:[
       {html:`Top row: ${par(A[0][0])}${par(v[0])} + ${par(A[0][1])}${par(v[1])} = ${fmt(r0)}`,
        bad:`Top row: ${par(A[0][0])}${par(v[0])} + ${par(A[0][1])}${par(v[1])} = ${fmt(w0)}`,
-       fix:`the top entry is ${fmt(r0)}, not ${fmt(w0)}`},
+       fix:`the top entry is ${fmt(r0)}, not ${fmt(w0)}`,
+       detail:`Dot row 1 of the matrix with the vector: (${fmt(A[0][0])})(${fmt(v[0])}) + (${fmt(A[0][1])})(${fmt(v[1])}) = ${fmt(A[0][0]*v[0])} + ${fmt(A[0][1]*v[1])} = <b>${fmt(r0)}</b>.`},
       {html:`Bottom row: ${par(A[1][0])}${par(v[0])} + ${par(A[1][1])}${par(v[1])} = ${fmt(r1)}`,
        bad:`Bottom row: ${par(A[1][0])}${par(v[0])} + ${par(A[1][1])}${par(v[1])} = ${fmt(w1)}`,
-       fix:`the bottom entry is ${fmt(r1)}, not ${fmt(w1)}`},
-      {html:`So the product is the column of those two entries.`}
+       fix:`the bottom entry is ${fmt(r1)}, not ${fmt(w1)}`,
+       detail:`Dot row 2 with the vector: (${fmt(A[1][0])})(${fmt(v[0])}) + (${fmt(A[1][1])})(${fmt(v[1])}) = ${fmt(A[1][0]*v[0])} + ${fmt(A[1][1]*v[1])} = <b>${fmt(r1)}</b>.`},
+      {html:`So the product is the column of those two entries.`,
+       detail:`Stack the two results into a 2×1 column: [ ${fmt(r0)} ; ${fmt(r1)} ].`}
     ]};
 }
 function gDet(){
@@ -1561,11 +1596,14 @@ function gDet(){
     problem:`Find det ${matNum(A)}.`,
     steps:[
       {html:`Diagonal product: ${par(A[0][0])}${par(A[1][1])} = ${fmt(p1)}`,
-       bad:`Diagonal product: ${par(A[0][0])}${par(A[1][1])} = ${fmt(wrong(p1))}`, fix:`${par(A[0][0])}${par(A[1][1])} = ${fmt(p1)}`},
+       bad:`Diagonal product: ${par(A[0][0])}${par(A[1][1])} = ${fmt(wrong(p1))}`, fix:`${par(A[0][0])}${par(A[1][1])} = ${fmt(p1)}`,
+       detail:`Multiply top-left × bottom-right: (${fmt(A[0][0])})(${fmt(A[1][1])}) = <b>${fmt(p1)}</b>.`},
       {html:`Off-diagonal product: ${par(A[0][1])}${par(A[1][0])} = ${fmt(p2)}`,
-       bad:`Off-diagonal product: ${par(A[0][1])}${par(A[1][0])} = ${fmt(wrong(p2))}`, fix:`${par(A[0][1])}${par(A[1][0])} = ${fmt(p2)}`},
+       bad:`Off-diagonal product: ${par(A[0][1])}${par(A[1][0])} = ${fmt(wrong(p2))}`, fix:`${par(A[0][1])}${par(A[1][0])} = ${fmt(p2)}`,
+       detail:`Multiply top-right × bottom-left: (${fmt(A[0][1])})(${fmt(A[1][0])}) = <b>${fmt(p2)}</b>.`},
       {html:`det = (diagonal) − (off-diagonal) = ${fmt(det)}`,
-       bad:`det = (diagonal) + (off-diagonal) = ${fmt(p1+p2)}`, fix:`you subtract: det = ${fmt(p1)} − (${fmt(p2)}) = ${fmt(det)}`}
+       bad:`det = (diagonal) + (off-diagonal) = ${fmt(p1+p2)}`, fix:`you subtract: det = ${fmt(p1)} − (${fmt(p2)}) = ${fmt(det)}`,
+       detail:`The formula is ad − bc — you always <b>subtract</b> the off-diagonal product: ${fmt(p1)} − (${fmt(p2)}) = <b>${fmt(det)}</b>.`}
     ]};
 }
 function gCtrb(){
@@ -1577,12 +1615,15 @@ function gCtrb(){
     problem:`Is this system controllable? &nbsp; ẋ = ${matNum(A)} x + ${matNum([[B[0]],[B[1]]])} u`,
     steps:[
       {html:`AB = ${matNum([[ab0],[ab1]])}`,
-       bad:`AB = ${matNum([[wrong(ab0)],[ab1]])}`, fix:`AB = ${matNum([[ab0],[ab1]])}`},
+       bad:`AB = ${matNum([[wrong(ab0)],[ab1]])}`, fix:`AB = ${matNum([[ab0],[ab1]])}`,
+       detail:`Multiply A by the column B (row·column): top = (${fmt(A[0][0])})(${fmt(B[0])})+(${fmt(A[0][1])})(${fmt(B[1])}) = <b>${fmt(ab0)}</b>; bottom = (${fmt(A[1][0])})(${fmt(B[0])})+(${fmt(A[1][1])})(${fmt(B[1])}) = <b>${fmt(ab1)}</b>.`},
       {html:`𝒞 = [ B  AB ] = ${mat([[fmt(B[0]),fmt(ab0)],[fmt(B[1]),fmt(ab1)]])}, det 𝒞 = ${fmt(det)}`,
-       bad:`𝒞 = [ B  AB ] = ${mat([[fmt(B[0]),fmt(ab0)],[fmt(B[1]),fmt(ab1)]])}, det 𝒞 = ${fmt(wrong(det))}`, fix:`det 𝒞 = ${fmt(det)}`},
+       bad:`𝒞 = [ B  AB ] = ${mat([[fmt(B[0]),fmt(ab0)],[fmt(B[1]),fmt(ab1)]])}, det 𝒞 = ${fmt(wrong(det))}`, fix:`det 𝒞 = ${fmt(det)}`,
+       detail:`𝒞 puts B and AB side by side. det of a 2×2 = (top-left)(bottom-right) − (top-right)(bottom-left) = (${fmt(B[0])})(${fmt(ab1)}) − (${fmt(ab0)})(${fmt(B[1])}) = <b>${fmt(det)}</b>.`},
       {html:`det 𝒞 ${ctrl?"≠":"="} 0 ⇒ ${ctrl?"controllable":"not controllable"}.`,
        bad:`det 𝒞 ${ctrl?"≠":"="} 0 ⇒ ${ctrl?"not controllable":"controllable"}.`,
-       fix:`det ${fmt(det)} ${ctrl?"≠ 0 ⇒ controllable":"= 0 ⇒ not controllable"}`}
+       fix:`det ${fmt(det)} ${ctrl?"≠ 0 ⇒ controllable":"= 0 ⇒ not controllable"}`,
+       detail:`Controllable ⇔ 𝒞 has full rank ⇔ det ≠ 0. Here det = ${fmt(det)}, which is ${ctrl?"non-zero ⇒ <b>controllable</b>":"zero ⇒ <b>not controllable</b>"}.`}
     ]};
 }
 function gEig(){
@@ -1591,13 +1632,17 @@ function gEig(){
     problem:`Find the eigenvalues of ${matNum(A)}.`,
     steps:[
       {html:`trace = ${fmt(A[0][0])} + ${fmt(A[1][1])} = ${fmt(tr)}`,
-       bad:`trace = ${fmt(A[0][0])} + ${fmt(A[1][1])} = ${fmt(wrong(tr))}`, fix:`trace = ${fmt(tr)}`},
+       bad:`trace = ${fmt(A[0][0])} + ${fmt(A[1][1])} = ${fmt(wrong(tr))}`, fix:`trace = ${fmt(tr)}`,
+       detail:`Trace = sum of the two diagonal entries: ${fmt(A[0][0])} + ${fmt(A[1][1])} = <b>${fmt(tr)}</b>.`},
       {html:`det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = ${fmt(det)}`,
-       bad:`det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = ${fmt(wrong(det))}`, fix:`det = ${fmt(det)}`},
+       bad:`det = ${par(A[0][0])}${par(A[1][1])} − ${par(A[0][1])}${par(A[1][0])} = ${fmt(wrong(det))}`, fix:`det = ${fmt(det)}`,
+       detail:`det = (main diagonal) − (off-diagonal): (${fmt(A[0][0])})(${fmt(A[1][1])}) − (${fmt(A[0][1])})(${fmt(A[1][0])}) = ${fmt(A[0][0]*A[1][1])} − ${fmt(A[0][1]*A[1][0])} = <b>${fmt(det)}</b>.`},
       {html:`characteristic equation: λ² − (${fmt(tr)})λ + (${fmt(det)}) = 0`,
-       bad:`characteristic equation: λ² + (${fmt(tr)})λ + (${fmt(det)}) = 0`, fix:`the middle term is −(trace)λ = −(${fmt(tr)})λ`},
+       bad:`characteristic equation: λ² + (${fmt(tr)})λ + (${fmt(det)}) = 0`, fix:`the middle term is −(trace)λ = −(${fmt(tr)})λ`,
+       detail:`Eigenvalues solve det(A − λI) = 0, which for any 2×2 becomes <b>λ² − (trace)λ + det = 0</b>. Watch the sign: the middle term is <b>minus</b> the trace, so −(${fmt(tr)})λ.`},
       {html:`⇒ λ = ${fmt(l1)} and ${fmt(l2)}`,
-       bad:`⇒ λ = ${fmt(wrong(l1))} and ${fmt(l2)}`, fix:`λ = ${fmt(l1)} and ${fmt(l2)}`}
+       bad:`⇒ λ = ${fmt(wrong(l1))} and ${fmt(l2)}`, fix:`λ = ${fmt(l1)} and ${fmt(l2)}`,
+       detail:`Solve the quadratic — factor, or λ = [ ${fmt(tr)} ± √(${fmt(tr)}² − 4·${fmt(det)}) ] / 2. That gives <b>λ = ${fmt(l1)}</b> and <b>λ = ${fmt(l2)}</b>.`}
     ]};
 }
 function gFB(){
@@ -1607,13 +1652,34 @@ function gFB(){
   return { topic:"State feedback (pole placement)",
     problem:`Find F = [f₁ f₂] for u = Fx placing the poles at ${fmt(p1)} and ${fmt(p2)}, with A = ${matNum([[0,1],[al,be]])}, B = ${matNum([[0],[1]])}.`,
     steps:[
-      {html:`Desired polynomial: s² + ${fmt(-sum)}s + ${fmt(prod)} &nbsp;(sum = ${fmt(sum)}, product = ${fmt(prod)})`},
-      {html:`A + BF ⇒ char. poly s² − (${fmt(be)}+f₂)s − (${fmt(al)}+f₁)`},
+      {html:`Desired polynomial: s² + ${fmt(-sum)}s + ${fmt(prod)} &nbsp;(sum = ${fmt(sum)}, product = ${fmt(prod)})`,
+       detail:`<ol>
+         <li>Build the polynomial whose roots are the poles you want: (s − p₁)(s − p₂).</li>
+         <li>Multiply out: (s − (${fmt(p1)}))(s − (${fmt(p2)})) = s² − (p₁+p₂)s + p₁p₂.</li>
+         <li>p₁ + p₂ = ${fmt(p1)} + ${fmt(p2)} = <b>${fmt(sum)}</b>; &nbsp; p₁·p₂ = (${fmt(p1)})(${fmt(p2)}) = <b>${fmt(prod)}</b>.</li>
+         <li>So the target is s² + ${fmt(-sum)}s + ${fmt(prod)}.</li></ol>`},
+      {html:`A + BF ⇒ char. poly s² − (${fmt(be)}+f₂)s − (${fmt(al)}+f₁)`,
+       detail:`<ol>
+         <li>Feeding the state back (u = Fx) turns A into A + BF.</li>
+         <li>Because B = [0;1], the row F = [f₁ f₂] only adds to the bottom row: A + BF = [[0, 1], [${fmt(al)}+f₁, ${fmt(be)}+f₂]].</li>
+         <li>Any matrix shaped [[0, 1], [x, y]] has characteristic polynomial <b>s² − y·s − x</b>.</li>
+         <li>Here y = ${fmt(be)}+f₂ and x = ${fmt(al)}+f₁, so char. poly = s² − (${fmt(be)}+f₂)s − (${fmt(al)}+f₁).</li></ol>`},
       {html:`f₂ = (sum) − β = ${fmt(sum)} − (${fmt(be)}) = ${fmt(f2)}`,
-       bad:`f₂ = (sum) + β = ${fmt(sum)} + (${fmt(be)}) = ${fmt(sum+be)}`, fix:`f₂ = sum − β = ${fmt(f2)}`},
+       bad:`f₂ = (sum) + β = ${fmt(sum)} + (${fmt(be)}) = ${fmt(sum+be)}`, fix:`f₂ = sum − β = ${fmt(f2)}`,
+       detail:`<ol>
+         <li>Match the <b>s coefficient</b>. Target: −(sum) = −(${fmt(sum)}). Closed loop: −(${fmt(be)}+f₂).</li>
+         <li>Set equal: −(${fmt(be)}+f₂) = −(${fmt(sum)}) ⇒ ${fmt(be)} + f₂ = ${fmt(sum)}.</li>
+         <li>Solve: f₂ = ${fmt(sum)} − (${fmt(be)}) = <b>${fmt(f2)}</b>.</li></ol>`},
       {html:`f₁ = −(product) − α = −(${fmt(prod)}) − (${fmt(al)}) = ${fmt(f1)}`,
-       bad:`f₁ = (product) − α = (${fmt(prod)}) − (${fmt(al)}) = ${fmt(prod-al)}`, fix:`f₁ = −(product) − α = ${fmt(f1)}`},
-      {html:`⇒ F = [ f₁  f₂ ] from the two values above.`}
+       bad:`f₁ = (product) − α = (${fmt(prod)}) − (${fmt(al)}) = ${fmt(prod-al)}`, fix:`f₁ = −(product) − α = ${fmt(f1)}`,
+       detail:`<ol>
+         <li>Match the <b>constant term</b>. Target: ${fmt(prod)}. Closed loop: −(${fmt(al)}+f₁).</li>
+         <li>Set equal: −(${fmt(al)}+f₁) = ${fmt(prod)} ⇒ ${fmt(al)} + f₁ = −(${fmt(prod)}).</li>
+         <li>Solve: f₁ = −(${fmt(prod)}) − (${fmt(al)}) = <b>${fmt(f1)}</b>.</li></ol>`},
+      {html:`⇒ F = [ f₁  f₂ ] from the two values above.`,
+       detail:`<ol>
+         <li>F is just the row of gains: F = [ f₁  f₂ ] = [ ${fmt(f1)}  ${fmt(f2)} ].</li>
+         <li>Check: A + BF = [[0, 1], [${fmt(al+f1)}, ${fmt(be+f2)}]] ⇒ s² + ${fmt(-sum)}s + ${fmt(prod)} ⇒ poles back at ${fmt(p1)}, ${fmt(p2)} ✓.</li></ol>`}
     ]};
 }
 const GAME_GENS=[gMV,gDet,gCtrb,gEig,gFB];
@@ -1640,7 +1706,7 @@ function newRound(){
       <span class="topic">Spot the mistake · ${g.topic}</span>
       <div class="prompt">${g.problem}</div>
       <p class="rule">Read the solution, then click the step you think is wrong — or “No mistakes” if it's all correct.</p>
-      <div class="gsteps">${g.steps.map((s,i)=>`<button class="gstep" data-i="${i}"><span class="sidx">${i+1}</span><span class="stxt">${i===bug?s.bad:s.html}</span></button>`).join("")}</div>
+      <div class="gsteps">${g.steps.map((s,i)=>`<div class="gstepwrap"><button class="gstep" data-i="${i}"><span class="sidx">${i+1}</span><span class="stxt">${i===bug?s.bad:s.html}</span>${s.detail?`<span class="dcaret" style="display:none">＋ break down</span>`:""}</button>${s.detail?`<div class="gdetail" style="display:none">${s.detail}</div>`:""}</div>`).join("")}</div>
       <div class="gbanner" style="display:none"></div>
       <div class="gctrl">
         <button class="act primary" data-a="none">✓ No mistakes</button>
@@ -1649,12 +1715,17 @@ function newRound(){
       </div>
     </div>`;
   const card=gameBody.querySelector(".game");
-  card.querySelectorAll(".gstep").forEach(b=>b.addEventListener("click",()=>guess(+b.dataset.i)));
+  card.querySelectorAll(".gstep").forEach(b=>b.addEventListener("click",()=>{ if(!answered) guess(+b.dataset.i); else toggleDetail(b); }));
   card.querySelector('[data-a=none]').onclick=()=>guess("none");
   card.querySelector('[data-a=reveal]').onclick=()=>finish(null,true);
   card.querySelector('[data-a=skip]').onclick=()=>newRound();
 }
 function guess(p){ if(!answered) finish(p,false); }
+function toggleDetail(b){
+  const wrap=b.closest(".gstepwrap"), d=wrap&&wrap.querySelector(".gdetail"); if(!d) return;
+  const open=d.style.display!=="none"; d.style.display=open?"none":"block";
+  const c=b.querySelector(".dcaret"); if(c) c.textContent=open?"＋ break down":"− hide";
+}
 function finish(p, revealed){
   if(answered) return; answered=true;
   const {g,bug}=cur;
@@ -1669,9 +1740,9 @@ function finish(p, revealed){
   }
   const els=[...card.querySelectorAll(".gstep")];
   els.forEach((el,i)=>{
-    el.disabled=true;
     if(i===bug) el.classList.add("bug");
     else if(bug<0) el.classList.add("good");
+    const c=el.querySelector(".dcaret"); if(c) c.style.display="";   // reveal "break down" affordance
   });
   if(typeof p==="number"){ els[p].classList.add(p===bug?"found":"chosen"); }
   if(bug>=0){ els[bug].querySelector(".stxt").insertAdjacentHTML("beforeend",`<span class="gfix">✗ ${g.steps[bug].fix}</span>`); }
@@ -1687,20 +1758,227 @@ function finish(p, revealed){
 }
 renderScore(); newRound();
 
+/* ================= visuals: root locus & bode ================= */
+const C=(re,im=0)=>({re,im});
+const cadd=(a,b)=>({re:a.re+b.re,im:a.im+b.im});
+const csub=(a,b)=>({re:a.re-b.re,im:a.im-b.im});
+const cmul=(a,b)=>({re:a.re*b.re-a.im*b.im,im:a.re*b.im+a.im*b.re});
+const cdiv=(a,b)=>{const d=b.re*b.re+b.im*b.im||1e-30;return {re:(a.re*b.re+a.im*b.im)/d,im:(a.im*b.re-a.re*b.im)/d};};
+const cabs=a=>Math.hypot(a.re,a.im);
+function polyval(coef,x){ let r=C(0,0); for(const c of coef) r=cadd(cmul(r,x),C(c,0)); return r; }
+function roots(coef){
+  let a=coef.slice(); while(a.length>1 && Math.abs(a[0])<1e-12) a.shift();
+  const n=a.length-1; if(n<=0) return [];
+  if(n===1) return [C(-a[1]/a[0],0)];
+  if(n===2){ const A=a[0],B=a[1],D=a[2], disc=B*B-4*A*D;
+    if(disc>=0){ const s=Math.sqrt(disc); return [C((-B+s)/(2*A)),C((-B-s)/(2*A))]; }
+    const s=Math.sqrt(-disc); return [C(-B/(2*A),s/(2*A)),C(-B/(2*A),-s/(2*A))]; }
+  const lead=a[0], m=a.map(c=>c/lead), R=1+Math.max(...m.slice(1).map(Math.abs)); let z=[];
+  for(let k=0;k<n;k++){ const ang=2*Math.PI*k/n+Math.PI/(2*n); z.push(C(R*Math.cos(ang),R*Math.sin(ang))); }
+  for(let it=0;it<300;it++){ let md=0;
+    for(let i=0;i<n;i++){ let den=C(1,0); for(let j=0;j<n;j++) if(j!==i) den=cmul(den,csub(z[i],z[j]));
+      const corr=cdiv(polyval(m,z[i]),den); z[i]=csub(z[i],corr); md=Math.max(md,cabs(corr)); }
+    if(md<1e-11) break; }
+  return z;
+}
+function charPoly(den,num,K){ const nd=den.length,nn=num.length,pad=nd-nn,c=den.slice();
+  for(let i=0;i<nn;i++) c[pad+i]+=K*num[i]; return c; }
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function setupCanvas(cv){ const dpr=Math.max(1,window.devicePixelRatio||1);
+  const w=cv.clientWidth||600, h=cv.clientHeight||380;
+  cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr);
+  const ctx=cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,w,h);
+  return {ctx,w,h}; }
+const fmtC=p=>{ const r=p.re.toFixed(2).replace("-","−");
+  if(Math.abs(p.im)<1e-4) return r; return `${r} ${p.im<0?"−":"+"} ${Math.abs(p.im).toFixed(2)}j`; };
+
+/* ---- root locus ---- */
+const LOCUS=[
+ {name:"1 / ((s+10)(s−1))", den:[1,9,-10], num:[1], kmax:200},
+ {name:"1 / (s(s+2))", den:[1,2,0], num:[1], kmax:80},
+ {name:"1 / ((s+1)(s+2)(s+3))", den:[1,6,11,6], num:[1], kmax:150},
+ {name:"(s+2) / (s(s+1))", den:[1,1,0], num:[1,2], kmax:60}
+];
+let locusIdx=0, curK=0, rafId=null;
+function prepLocus(sys){
+  const pts=[], N=170;
+  for(let i=0;i<=N;i++){ const K=sys.kmax*(i/N)*(i/N); roots(charPoly(sys.den,sys.num,K)).forEach(r=>pts.push(r)); }
+  roots(sys.den).forEach(r=>pts.push(r)); roots(sys.num).forEach(r=>pts.push(r));
+  let minx=1e9,maxx=-1e9,maxim=0;
+  pts.forEach(p=>{ minx=Math.min(minx,p.re); maxx=Math.max(maxx,p.re); maxim=Math.max(maxim,Math.abs(p.im)); });
+  minx=Math.max(minx,-40); maxx=Math.min(maxx,25); maxim=Math.min(maxim,30);
+  const padx=(maxx-minx)*0.1+0.6; minx-=padx; maxx+=padx; const A=maxim*1.2+0.6;
+  sys._pts=pts;
+  sys._map=(w,h)=>{ const m=32, cx=(minx+maxx)/2, spanx=(maxx-minx)||1, spany=2*A;
+    const s=Math.min((w-2*m)/spanx,(h-2*m)/spany);
+    return (re,im)=>({x:w/2+(re-cx)*s, y:h/2-im*s}); };
+}
+function drawLocus(){
+  const cv=document.getElementById("locusCv"); if(!cv) return;
+  const {ctx,w,h}=setupCanvas(cv); const sys=LOCUS[locusIdx]; if(!sys._map) prepLocus(sys);
+  const map=sys._map(w,h), o=map(0,0);
+  const ink=css("--ink"),line=css("--line"),faint=css("--ink-faint"),good=css("--good"),bad=css("--bad");
+  ctx.strokeStyle=line; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(0,o.y); ctx.lineTo(w,o.y); ctx.moveTo(o.x,0); ctx.lineTo(o.x,h); ctx.stroke();
+  ctx.fillStyle=faint; ctx.font="12px sans-serif"; ctx.textAlign="left";
+  ctx.fillText("Re",w-22,o.y-6); ctx.fillText("Im",o.x+6,14);
+  ctx.fillStyle=faint;
+  sys._pts.forEach(p=>{ const q=map(p.re,p.im); ctx.fillRect(q.x-0.6,q.y-0.6,1.3,1.3); });
+  ctx.strokeStyle=ink; ctx.lineWidth=1.8;
+  roots(sys.den).forEach(p=>{ const q=map(p.re,p.im); ctx.beginPath();
+    ctx.moveTo(q.x-5,q.y-5);ctx.lineTo(q.x+5,q.y+5);ctx.moveTo(q.x+5,q.y-5);ctx.lineTo(q.x-5,q.y+5); ctx.stroke(); });
+  roots(sys.num).forEach(p=>{ const q=map(p.re,p.im); ctx.beginPath(); ctx.arc(q.x,q.y,5,0,7); ctx.stroke(); });
+  const cp=roots(charPoly(sys.den,sys.num,curK)), stable=cp.every(p=>p.re<1e-9);
+  ctx.fillStyle=stable?good:bad;
+  cp.forEach(p=>{ const q=map(p.re,p.im); ctx.beginPath(); ctx.arc(q.x,q.y,5.5,0,7); ctx.fill(); });
+  const kv=document.getElementById("kval"); if(kv) kv.textContent=curK.toFixed(2);
+  const rd=document.getElementById("locusRead");
+  if(rd) rd.innerHTML=`Closed-loop poles: <b>${cp.map(fmtC).join(", ")}</b> — <b style="color:${stable?"var(--good)":"var(--bad)"}">${stable?"stable":"unstable"}</b>`;
+}
+function setupLocusSystem(){
+  const sys=LOCUS[locusIdx]; prepLocus(sys); curK=0;
+  const sl=document.getElementById("kSlider");
+  sl.min=0; sl.max=sys.kmax; sl.step=sys.kmax/500; sl.value=0;
+  sl.oninput=()=>{ stopPlay(); curK=+sl.value; drawLocus(); };
+  document.getElementById("kPlay").onclick=togglePlay;
+  drawLocus();
+}
+function togglePlay(){
+  if(rafId){ stopPlay(); return; }
+  document.getElementById("kPlay").textContent="⏸ Pause";
+  const sys=LOCUS[locusIdx], stepK=sys.kmax/300;
+  const tick=()=>{ curK+=stepK; if(curK>sys.kmax) curK=0;
+    const sl=document.getElementById("kSlider"); if(sl) sl.value=curK; drawLocus(); rafId=requestAnimationFrame(tick); };
+  rafId=requestAnimationFrame(tick);
+}
+function stopPlay(){ if(rafId){ cancelAnimationFrame(rafId); rafId=null; } const b=document.getElementById("kPlay"); if(b) b.textContent="▶ Sweep"; }
+
+/* ---- bode ---- */
+const BODE=[
+ {name:"5 / (s(s+1)(s+5))", num:[5], den:[1,6,5,0]},
+ {name:"1 / (s(s+0.1)(s+1000))", num:[1], den:[1,1000.1,100,0]},
+ {name:"(s+10) / ((s+0.1)(s+1000))", num:[1,10], den:[1,1000.1,100]},
+ {name:"1 / (s² + 0.6s + 4)", num:[1], den:[1,0.6,4]}
+];
+let bodeIdx=0;
+const sup=k=>{const m={"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵"};return(""+k).split("").map(c=>m[c]||c).join("");};
+function findCross(v,t){ const o=[]; for(let i=0;i<v.length-1;i++){ const a=v[i]-t,b=v[i+1]-t;
+  if(a===0)o.push(i); else if(a*b<0)o.push(i+a/(a-b)); } return o; }
+function valAt(a,fi){ const i=Math.max(0,Math.min(a.length-2,Math.floor(fi))),f=fi-i; return a[i]+(a[i+1]-a[i])*f; }
+function omAt(om,fi){ const i=Math.max(0,Math.min(om.length-2,Math.floor(fi))),f=fi-i; return om[i]*Math.pow(om[i+1]/om[i],f); }
+function drawBode(cursorX){
+  const cv=document.getElementById("bodeCv"); if(!cv) return;
+  const {ctx,w,h}=setupCanvas(cv); const sys=BODE[bodeIdx];
+  const ink=css("--ink"),line=css("--line"),faint=css("--ink-faint"),acc=css("--accent"),mark=css("--mark"),bad=css("--bad");
+  const w0=1e-2,w1=1e4,N=500,L0=Math.log10(w0),L1=Math.log10(w1);
+  const om=[],mag=[],ph=[]; let prev=null;
+  for(let i=0;i<=N;i++){ const wq=Math.pow(10,L0+(L1-L0)*i/N), s=C(0,wq);
+    const G=cdiv(polyval(sys.num,s),polyval(sys.den,s));
+    om.push(wq); mag.push(20*Math.log10(Math.max(cabs(G),1e-9)));
+    let p=Math.atan2(G.im,G.re)*180/Math.PI; if(prev!==null){ while(p-prev>180)p-=360; while(p-prev<-180)p+=360; } prev=p; ph.push(p); }
+  const m={l:56,r:16,t:12,b:28}, gap=32, ph_h=(h-m.t-m.b-gap)/2;
+  const magTop=m.t, magH=ph_h, phTop=m.t+ph_h+gap, phH=ph_h;
+  const xOf=wq=>m.l+(Math.log10(wq)-L0)/(L1-L0)*(w-m.l-m.r);
+  const xToOm=x=>Math.pow(10,L0+(x-m.l)/(w-m.l-m.r)*(L1-L0));
+  let mn=Math.min(...mag),mx=Math.max(...mag); if(!isFinite(mn))mn=-100; mn=Math.max(mn,-160); if(mx<6)mx=6;
+  const mp=(mx-mn)*0.08+2; mn-=mp; mx+=mp; const yMag=d=>magTop+(mx-d)/(mx-mn)*magH;
+  let pmin=Math.min(...ph),pmax=Math.max(...ph); pmin=Math.floor((pmin-5)/45)*45; pmax=Math.ceil((pmax+5)/45)*45;
+  if(pmax-pmin<90) pmax=pmin+90; const yPh=d=>phTop+(pmax-d)/(pmax-pmin)*phH;
+  ctx.strokeStyle=line; ctx.lineWidth=1;
+  ctx.strokeRect(m.l,magTop,w-m.l-m.r,magH); ctx.strokeRect(m.l,phTop,w-m.l-m.r,phH);
+  ctx.fillStyle=faint; ctx.font="11px sans-serif"; ctx.textAlign="center";
+  for(let k=Math.ceil(L0);k<=Math.floor(L1);k++){ const x=xOf(Math.pow(10,k));
+    ctx.strokeStyle=line; ctx.beginPath(); ctx.moveTo(x,magTop);ctx.lineTo(x,magTop+magH); ctx.moveTo(x,phTop);ctx.lineTo(x,phTop+phH); ctx.stroke();
+    ctx.fillText("10"+sup(k),x,phTop+phH+16); }
+  ctx.textAlign="right";
+  if(0>mn&&0<mx){ const y=yMag(0); ctx.strokeStyle=faint; ctx.setLineDash([4,3]); ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(w-m.r,y);ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=faint; ctx.fillText("0 dB",m.l-5,y+3); }
+  if(-180>pmin&&-180<pmax){ const y=yPh(-180); ctx.strokeStyle=faint; ctx.setLineDash([4,3]); ctx.beginPath();ctx.moveTo(m.l,y);ctx.lineTo(w-m.r,y);ctx.stroke(); ctx.setLineDash([]); ctx.fillStyle=faint; ctx.fillText("−180°",m.l-5,y+3); }
+  ctx.fillStyle=faint; ctx.fillText(mx.toFixed(0),m.l-5,magTop+9); ctx.fillText(mn.toFixed(0),m.l-5,magTop+magH-1);
+  ctx.fillText(pmax.toFixed(0)+"°",m.l-5,phTop+9); ctx.fillText(pmin.toFixed(0)+"°",m.l-5,phTop+phH-1);
+  ctx.save();ctx.translate(13,magTop+magH/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.fillText("Magnitude (dB)",0,0);ctx.restore();
+  ctx.save();ctx.translate(13,phTop+phH/2);ctx.rotate(-Math.PI/2);ctx.textAlign="center";ctx.fillText("Phase (deg)",0,0);ctx.restore();
+  ctx.strokeStyle=acc; ctx.lineWidth=2;
+  ctx.beginPath(); om.forEach((wq,i)=>{ const x=xOf(wq),y=yMag(mag[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
+  ctx.beginPath(); om.forEach((wq,i)=>{ const x=xOf(wq),y=yPh(ph[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
+  const gcs=findCross(mag,0), pcs=findCross(ph,-180);
+  let pm=null,gm=null,wgc=null,wpc=null;
+  if(gcs.length){ const fi=gcs[gcs.length-1]; wgc=omAt(om,fi); pm=180+valAt(ph,fi);
+    const x=xOf(wgc); ctx.strokeStyle=mark; ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.setLineDash([]); }
+  if(pcs.length){ const fi=pcs[pcs.length-1]; wpc=omAt(om,fi); gm=-valAt(mag,fi);
+    const x=xOf(wpc); ctx.strokeStyle=bad; ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.setLineDash([]); }
+  let curTxt="";
+  if(cursorX!=null && cursorX>=m.l && cursorX<=w-m.r){ const wq=xToOm(cursorX);
+    const fi=(Math.log10(wq)-L0)/(L1-L0)*N, mg=valAt(mag,fi), pv=valAt(ph,fi), x=xOf(wq);
+    ctx.strokeStyle=ink; ctx.globalAlpha=.45; ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.globalAlpha=1;
+    ctx.fillStyle=ink; ctx.beginPath();ctx.arc(x,yMag(mg),3.5,0,7);ctx.fill(); ctx.beginPath();ctx.arc(x,yPh(pv),3.5,0,7);ctx.fill();
+    curTxt=` &nbsp;·&nbsp; cursor: ω = <b>${wq.toPrecision(3)}</b>, |G| = <b>${mg.toFixed(1)}</b> dB, ∠G = <b>${pv.toFixed(1)}</b>°`; }
+  const rd=document.getElementById("bodeRead");
+  if(rd) rd.innerHTML=`Phase margin <b style="color:var(--mark-ink)">${pm==null?"—":pm.toFixed(1)+"°"}</b>${wgc?` (ω<sub>gc</sub> = ${wgc.toPrecision(3)})`:""} &nbsp;·&nbsp; Gain margin <b style="color:var(--bad)">${gm==null?"—":gm.toFixed(1)+" dB"}</b>${wpc?` (ω<sub>pc</sub> = ${wpc.toPrecision(3)})`:""}${curTxt}`;
+}
+
+/* ---- viz view controller ---- */
+let vizMode="locus";
+function selectViz(mode){
+  vizMode=mode; stopPlay();
+  document.querySelectorAll("#vizpills .pill").forEach(p=>p.classList.toggle("on",p.dataset.v===mode));
+  const body=document.getElementById("viz-body");
+  if(mode==="locus"){
+    body.innerHTML=`
+      <div class="cshead"><span class="topic">Drag K — the closed-loop poles move</span><h2>Root locus</h2></div>
+      <div class="viz">
+        <div class="vizrow">Open-loop G(s) = <select id="locusSys"></select></div>
+        <canvas id="locusCv" class="plot"></canvas>
+        <div class="vizrow"><span>Gain K = <b id="kval">0.00</b></span>
+          <input type="range" id="kSlider"><button class="act" id="kPlay">▶ Sweep</button></div>
+        <div class="readout" id="locusRead"></div>
+        <p class="vizhint">✕ open-loop poles (K→0) · ○ zeros · filled dots = closed-loop poles at the current K (green = stable, red = a pole crossed into the right half-plane).</p>
+      </div>`;
+    const sel=document.getElementById("locusSys");
+    LOCUS.forEach((s,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=s.name; sel.appendChild(o); });
+    sel.value=locusIdx; sel.onchange=()=>{ locusIdx=+sel.value; setupLocusSystem(); };
+    setupLocusSystem();
+  } else {
+    body.innerHTML=`
+      <div class="cshead"><span class="topic">Move across the plot to read it</span><h2>Bode plot</h2></div>
+      <div class="viz">
+        <div class="vizrow">G(s) = <select id="bodeSys"></select></div>
+        <canvas id="bodeCv" class="plot tall"></canvas>
+        <div class="readout" id="bodeRead"></div>
+        <p class="vizhint">Amber line = gain crossover (0 dB) → phase margin. Red line = phase crossover (−180°) → gain margin. Hover or drag to read any frequency. “—” means that crossover doesn't occur.</p>
+      </div>`;
+    const sel=document.getElementById("bodeSys");
+    BODE.forEach((s,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=s.name; sel.appendChild(o); });
+    sel.value=bodeIdx; sel.onchange=()=>{ bodeIdx=+sel.value; drawBode(); };
+    const cv=document.getElementById("bodeCv");
+    cv.addEventListener("mousemove",e=>{ const r=cv.getBoundingClientRect(); drawBode(e.clientX-r.left); });
+    cv.addEventListener("mouseleave",()=>drawBode());
+    cv.addEventListener("touchmove",e=>{ const r=cv.getBoundingClientRect(); drawBode(e.touches[0].clientX-r.left); e.preventDefault(); },{passive:false});
+    drawBode();
+  }
+}
+function vizRefresh(){ const v=document.getElementById("view-viz"); if(!v||v.style.display==="none") return;
+  if(vizMode==="locus") drawLocus(); else drawBode(); }
+document.querySelectorAll("#vizpills .pill").forEach(p=>p.addEventListener("click",()=>selectViz(p.dataset.v)));
+window.addEventListener("resize",()=>{ clearTimeout(window._vizT); window._vizT=setTimeout(vizRefresh,150); });
+
 /* ================= views ================= */
 const views={hub:document.getElementById("view-hub"),lesson:document.getElementById("view-lesson"),
-  game:document.getElementById("view-game"),exam:document.getElementById("view-exam"),courses:document.getElementById("view-courses")};
+  game:document.getElementById("view-game"),viz:document.getElementById("view-viz"),
+  exam:document.getElementById("view-exam"),courses:document.getElementById("view-courses")};
 const navHub=document.getElementById("navHub"), navGame=document.getElementById("navGame"),
-  navExam=document.getElementById("navExam"), navCourses=document.getElementById("navCourses");
+  navViz=document.getElementById("navViz"), navExam=document.getElementById("navExam"), navCourses=document.getElementById("navCourses");
 function showView(which){
+  if(which!=="viz") stopPlay();
   Object.entries(views).forEach(([k,el])=>el.style.display=(k===which)?"":"none");
   navHub.classList.toggle("on",which==="hub"||which==="lesson");
   navGame.classList.toggle("on",which==="game");
+  navViz.classList.toggle("on",which==="viz");
   navExam.classList.toggle("on",which==="exam");
   navCourses.classList.toggle("on",which==="courses");
 }
 navHub.addEventListener("click",()=>{ renderHub(); showView("hub"); });
 navGame.addEventListener("click",()=>{ showView("game"); window.scrollTo({top:0,behavior:"smooth"}); });
+navViz.addEventListener("click",()=>{ showView("viz"); selectViz(vizMode); window.scrollTo({top:0,behavior:"smooth"}); });
 navExam.addEventListener("click",()=>{ showView("exam"); window.scrollTo({top:0,behavior:"smooth"}); });
 navCourses.addEventListener("click",()=>showView("courses"));
 function goCourse(id){showView("courses");selectCourse(id);window.scrollTo({top:0,behavior:"smooth"});}
@@ -1710,6 +1988,7 @@ const root=document.documentElement;
 document.getElementById("theme").addEventListener("click",()=>{
   const cur=root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
   root.setAttribute("data-theme",cur==="dark"?"light":"dark");
+  vizRefresh();
 });
 
 /* init */
