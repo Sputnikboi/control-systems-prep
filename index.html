@@ -283,6 +283,8 @@
     padding:.6rem .85rem .7rem;font-size:.92rem;color:var(--ink);animation:slide .2s ease;}
   .gdetail ol{margin:.2rem 0;padding-left:1.15rem;} .gdetail li{margin:.35rem 0;}
   .gdetail b{font-variant-numeric:tabular-nums;}
+  .gplot{width:100%;height:300px;display:block;background:var(--paper);border:1px solid var(--line);
+    border-radius:10px;margin-top:.7rem;}
 
   /* ---- visuals (root locus / bode) ---- */
   .viz{background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -1682,7 +1684,39 @@ function gFB(){
          <li>Check: A + BF = [[0, 1], [${fmt(al+f1)}, ${fmt(be+f2)}]] ⇒ s² + ${fmt(-sum)}s + ${fmt(prod)} ⇒ poles back at ${fmt(p1)}, ${fmt(p2)} ✓.</li></ol>`}
     ]};
 }
-const GAME_GENS=[gMV,gDet,gCtrb,gEig,gFB];
+function gBode(){
+  let sys,S,M;
+  for(let t=0;t<60;t++){ const a=randInt(1,4); let b=randInt(2,6); if(b<=a) b=a+1; const K=randInt(2,26);
+    sys={name:`${K} / (s(s+${a})(s+${b}))`, num:[K], den:[1,a+b,a*b,0]};
+    S=bodeSamples(sys); M=bodeMargins(S);
+    if(M.pm!=null&&M.gm!=null&&M.pm>4&&M.pm<80&&M.gm>1.5&&M.gm<38&&M.wgc<M.wpc) break; }
+  const phGc=M.pm-180, magPc=-M.gm;
+  const rpm=Math.round(M.pm), rgm=+M.gm.toFixed(1), rwgc=+M.wgc.toPrecision(2), rwpc=+M.wpc.toPrecision(2);
+  const rphGc=Math.round(phGc), rmagPc=+magPc.toFixed(1);
+  return {
+    topic:"Reading Bode margins",
+    problem:`Someone read the stability margins off this Bode plot of &nbsp;G(s) = ${sys.name}. &nbsp;Check their reading.<canvas class="gplot"></canvas>`,
+    mount:card=>{ const cv=card.querySelector(".gplot"); if(cv) renderBode(cv,sys,{showMargins:false}); },
+    steps:[
+      {html:`Gain crossover: the magnitude crosses 0 dB at ω ≈ ${rwgc} rad/s.`,
+       detail:`ω<sub>gc</sub> is where the magnitude curve (top panel) passes through the 0 dB line — here about ${rwgc} rad/s.`},
+      {html:`The phase there is about ${rphGc}°, so the phase margin is PM = 180° + (${rphGc}°) = ${rpm}°.`,
+       bad:`The phase there is about ${rphGc}°, so the phase margin is PM = ${rphGc}°.`,
+       fix:`PM = 180° + (phase at ω_gc) = 180° + (${rphGc}°) = ${rpm}°`,
+       detail:`Phase margin = 180° + (the phase at the gain crossover). Phase ≈ ${rphGc}°, so PM = 180 + (${rphGc}) = <b>${rpm}°</b>. A “phase margin” that came out negative is the tell you forgot the +180°.`},
+      {html:`Phase crossover: the phase crosses −180° at ω ≈ ${rwpc} rad/s.`,
+       detail:`ω<sub>pc</sub> is where the phase curve (bottom panel) passes through −180° — here about ${rwpc} rad/s.`},
+      {html:`The magnitude there is ${rmagPc} dB (below 0 dB), so the gain margin is GM = −(${rmagPc}) = ${rgm} dB.`,
+       bad:`The magnitude there is ${rmagPc} dB, so the gain margin is GM = ${rmagPc} dB.`,
+       fix:`GM = −(magnitude at ω_pc) = −(${rmagPc}) = ${rgm} dB`,
+       detail:`Gain margin is how far below 0 dB the magnitude sits at ω<sub>pc</sub>: GM = −(${rmagPc} dB) = <b>${rgm} dB</b>. Below 0 dB ⇒ positive margin. Reporting the raw negative dB reading is the mistake.`},
+      {html:`Both margins are positive, so the closed loop is stable.`,
+       bad:`A margin is negative, so the closed loop is unstable.`,
+       fix:`PM = ${rpm}° and GM = ${rgm} dB are both positive ⇒ stable`,
+       detail:`Positive PM and GM mean the curve stays clear of the −1 point — the closed loop is stable, with room to spare before it isn't.`}
+    ]};
+}
+const GAME_GENS=[gMV,gDet,gCtrb,gEig,gFB,gBode];
 
 const GKEY="csp-game";
 let game={score:0,streak:0,best:0};
@@ -1715,11 +1749,14 @@ function newRound(){
       </div>
     </div>`;
   const card=gameBody.querySelector(".game");
+  if(g.mount) g.mount(card);
   card.querySelectorAll(".gstep").forEach(b=>b.addEventListener("click",()=>{ if(!answered) guess(+b.dataset.i); else toggleDetail(b); }));
   card.querySelector('[data-a=none]').onclick=()=>guess("none");
   card.querySelector('[data-a=reveal]').onclick=()=>finish(null,true);
   card.querySelector('[data-a=skip]').onclick=()=>newRound();
 }
+function gameReflow(){ const v=document.getElementById("view-game"); if(!v||v.style.display==="none") return;
+  const card=gameBody.querySelector(".game"); if(card && cur && cur.g.mount) cur.g.mount(card); }
 function guess(p){ if(!answered) finish(p,false); }
 function toggleDetail(b){
   const wrap=b.closest(".gstepwrap"), d=wrap&&wrap.querySelector(".gdetail"); if(!d) return;
@@ -1866,16 +1903,26 @@ function findCross(v,t){ const o=[]; for(let i=0;i<v.length-1;i++){ const a=v[i]
   if(a===0)o.push(i); else if(a*b<0)o.push(i+a/(a-b)); } return o; }
 function valAt(a,fi){ const i=Math.max(0,Math.min(a.length-2,Math.floor(fi))),f=fi-i; return a[i]+(a[i+1]-a[i])*f; }
 function omAt(om,fi){ const i=Math.max(0,Math.min(om.length-2,Math.floor(fi))),f=fi-i; return om[i]*Math.pow(om[i+1]/om[i],f); }
-function drawBode(cursorX){
-  const cv=document.getElementById("bodeCv"); if(!cv) return;
-  const {ctx,w,h}=setupCanvas(cv); const sys=BODE[bodeIdx];
-  const ink=css("--ink"),line=css("--line"),faint=css("--ink-faint"),acc=css("--accent"),mark=css("--mark"),bad=css("--bad");
+function bodeSamples(sys){
   const w0=1e-2,w1=1e4,N=500,L0=Math.log10(w0),L1=Math.log10(w1);
   const om=[],mag=[],ph=[]; let prev=null;
   for(let i=0;i<=N;i++){ const wq=Math.pow(10,L0+(L1-L0)*i/N), s=C(0,wq);
     const G=cdiv(polyval(sys.num,s),polyval(sys.den,s));
     om.push(wq); mag.push(20*Math.log10(Math.max(cabs(G),1e-9)));
     let p=Math.atan2(G.im,G.re)*180/Math.PI; if(prev!==null){ while(p-prev>180)p-=360; while(p-prev<-180)p+=360; } prev=p; ph.push(p); }
+  return {om,mag,ph,N,L0,L1};
+}
+function bodeMargins(S){
+  const gcs=findCross(S.mag,0), pcs=findCross(S.ph,-180);
+  let pm=null,gm=null,wgc=null,wpc=null;
+  if(gcs.length){ const fi=gcs[gcs.length-1]; wgc=omAt(S.om,fi); pm=180+valAt(S.ph,fi); }
+  if(pcs.length){ const fi=pcs[pcs.length-1]; wpc=omAt(S.om,fi); gm=-valAt(S.mag,fi); }
+  return {pm,gm,wgc,wpc};
+}
+function renderBode(cv,sys,opts){
+  opts=opts||{}; const {ctx,w,h}=setupCanvas(cv);
+  const ink=css("--ink"),line=css("--line"),faint=css("--ink-faint"),acc=css("--accent"),mark=css("--mark"),bad=css("--bad");
+  const S=bodeSamples(sys), {om,mag,ph,N,L0,L1}=S;
   const m={l:56,r:16,t:12,b:28}, gap=32, ph_h=(h-m.t-m.b-gap)/2;
   const magTop=m.t, magH=ph_h, phTop=m.t+ph_h+gap, phH=ph_h;
   const xOf=wq=>m.l+(Math.log10(wq)-L0)/(L1-L0)*(w-m.l-m.r);
@@ -1900,20 +1947,25 @@ function drawBode(cursorX){
   ctx.strokeStyle=acc; ctx.lineWidth=2;
   ctx.beginPath(); om.forEach((wq,i)=>{ const x=xOf(wq),y=yMag(mag[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
   ctx.beginPath(); om.forEach((wq,i)=>{ const x=xOf(wq),y=yPh(ph[i]); i?ctx.lineTo(x,y):ctx.moveTo(x,y); }); ctx.stroke();
-  const gcs=findCross(mag,0), pcs=findCross(ph,-180);
-  let pm=null,gm=null,wgc=null,wpc=null;
-  if(gcs.length){ const fi=gcs[gcs.length-1]; wgc=omAt(om,fi); pm=180+valAt(ph,fi);
-    const x=xOf(wgc); ctx.strokeStyle=mark; ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.setLineDash([]); }
-  if(pcs.length){ const fi=pcs[pcs.length-1]; wpc=omAt(om,fi); gm=-valAt(mag,fi);
-    const x=xOf(wpc); ctx.strokeStyle=bad; ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.setLineDash([]); }
-  let curTxt="";
-  if(cursorX!=null && cursorX>=m.l && cursorX<=w-m.r){ const wq=xToOm(cursorX);
+  const M=bodeMargins(S);
+  if(opts.showMargins!==false){
+    if(M.wgc!=null){ const x=xOf(M.wgc); ctx.strokeStyle=mark; ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.setLineDash([]); }
+    if(M.wpc!=null){ const x=xOf(M.wpc); ctx.strokeStyle=bad; ctx.setLineDash([3,3]); ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.setLineDash([]); }
+  }
+  let cursor=null;
+  if(opts.cursorX!=null && opts.cursorX>=m.l && opts.cursorX<=w-m.r){ const wq=xToOm(opts.cursorX);
     const fi=(Math.log10(wq)-L0)/(L1-L0)*N, mg=valAt(mag,fi), pv=valAt(ph,fi), x=xOf(wq);
     ctx.strokeStyle=ink; ctx.globalAlpha=.45; ctx.beginPath();ctx.moveTo(x,magTop);ctx.lineTo(x,phTop+phH);ctx.stroke(); ctx.globalAlpha=1;
     ctx.fillStyle=ink; ctx.beginPath();ctx.arc(x,yMag(mg),3.5,0,7);ctx.fill(); ctx.beginPath();ctx.arc(x,yPh(pv),3.5,0,7);ctx.fill();
-    curTxt=` &nbsp;·&nbsp; cursor: ω = <b>${wq.toPrecision(3)}</b>, |G| = <b>${mg.toFixed(1)}</b> dB, ∠G = <b>${pv.toFixed(1)}</b>°`; }
+    cursor={om:wq,mag:mg,ph:pv}; }
+  return {M,cursor};
+}
+function drawBode(cursorX){
+  const cv=document.getElementById("bodeCv"); if(!cv) return;
+  const {M,cursor}=renderBode(cv,BODE[bodeIdx],{cursorX,showMargins:true});
+  const ct=cursor?` &nbsp;·&nbsp; cursor: ω = <b>${cursor.om.toPrecision(3)}</b>, |G| = <b>${cursor.mag.toFixed(1)}</b> dB, ∠G = <b>${cursor.ph.toFixed(1)}</b>°`:"";
   const rd=document.getElementById("bodeRead");
-  if(rd) rd.innerHTML=`Phase margin <b style="color:var(--mark-ink)">${pm==null?"—":pm.toFixed(1)+"°"}</b>${wgc?` (ω<sub>gc</sub> = ${wgc.toPrecision(3)})`:""} &nbsp;·&nbsp; Gain margin <b style="color:var(--bad)">${gm==null?"—":gm.toFixed(1)+" dB"}</b>${wpc?` (ω<sub>pc</sub> = ${wpc.toPrecision(3)})`:""}${curTxt}`;
+  if(rd) rd.innerHTML=`Phase margin <b style="color:var(--mark-ink)">${M.pm==null?"—":M.pm.toFixed(1)+"°"}</b>${M.wgc?` (ω<sub>gc</sub> = ${M.wgc.toPrecision(3)})`:""} &nbsp;·&nbsp; Gain margin <b style="color:var(--bad)">${M.gm==null?"—":M.gm.toFixed(1)+" dB"}</b>${M.wpc?` (ω<sub>pc</sub> = ${M.wpc.toPrecision(3)})`:""}${ct}`;
 }
 
 /* ---- viz view controller ---- */
@@ -1959,7 +2011,7 @@ function selectViz(mode){
 function vizRefresh(){ const v=document.getElementById("view-viz"); if(!v||v.style.display==="none") return;
   if(vizMode==="locus") drawLocus(); else drawBode(); }
 document.querySelectorAll("#vizpills .pill").forEach(p=>p.addEventListener("click",()=>selectViz(p.dataset.v)));
-window.addEventListener("resize",()=>{ clearTimeout(window._vizT); window._vizT=setTimeout(vizRefresh,150); });
+window.addEventListener("resize",()=>{ clearTimeout(window._vizT); window._vizT=setTimeout(()=>{vizRefresh();gameReflow();},150); });
 
 /* ================= views ================= */
 const views={hub:document.getElementById("view-hub"),lesson:document.getElementById("view-lesson"),
@@ -1977,7 +2029,7 @@ function showView(which){
   navCourses.classList.toggle("on",which==="courses");
 }
 navHub.addEventListener("click",()=>{ renderHub(); showView("hub"); });
-navGame.addEventListener("click",()=>{ showView("game"); window.scrollTo({top:0,behavior:"smooth"}); });
+navGame.addEventListener("click",()=>{ showView("game"); gameReflow(); window.scrollTo({top:0,behavior:"smooth"}); });
 navViz.addEventListener("click",()=>{ showView("viz"); selectViz(vizMode); window.scrollTo({top:0,behavior:"smooth"}); });
 navExam.addEventListener("click",()=>{ showView("exam"); window.scrollTo({top:0,behavior:"smooth"}); });
 navCourses.addEventListener("click",()=>showView("courses"));
@@ -1988,7 +2040,7 @@ const root=document.documentElement;
 document.getElementById("theme").addEventListener("click",()=>{
   const cur=root.getAttribute("data-theme")||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");
   root.setAttribute("data-theme",cur==="dark"?"light":"dark");
-  vizRefresh();
+  vizRefresh(); gameReflow();
 });
 
 /* init */
