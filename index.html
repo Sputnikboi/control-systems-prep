@@ -284,7 +284,8 @@
   .gdetail ol{margin:.2rem 0;padding-left:1.15rem;} .gdetail li{margin:.35rem 0;}
   .gdetail b{font-variant-numeric:tabular-nums;}
   .gplot{width:100%;height:300px;display:block;background:var(--paper);border:1px solid var(--line);
-    border-radius:10px;margin-top:.7rem;}
+    border-radius:10px;margin-top:.7rem;touch-action:none;cursor:crosshair;}
+  .greadout{min-height:1.2em;margin-top:.4rem;}
 
   /* ---- visuals (root locus / bode) ---- */
   .viz{background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -1695,8 +1696,17 @@ function gBode(){
   const rphGc=Math.round(phGc), rmagPc=+magPc.toFixed(1);
   return {
     topic:"Reading Bode margins",
-    problem:`Someone read the stability margins off this Bode plot of &nbsp;G(s) = ${sys.name}. &nbsp;Check their reading.<canvas class="gplot"></canvas>`,
-    mount:card=>{ const cv=card.querySelector(".gplot"); if(cv) renderBode(cv,sys,{showMargins:false}); },
+    problem:`Someone read the stability margins off this Bode plot of &nbsp;G(s) = ${sys.name}. &nbsp;Check their reading.<canvas class="gplot"></canvas><div class="greadout vizhint">Hover or drag across the plot to read ω, |G| and phase.</div>`,
+    mount:card=>{
+      const cv=card.querySelector(".gplot"); if(!cv) return;
+      const rd=card.querySelector(".greadout");
+      renderBode(cv,sys,{showMargins:false});
+      const show=x=>{ const {cursor}=renderBode(cv,sys,{showMargins:false,cursorX:x});
+        if(rd&&cursor) rd.innerHTML=`ω = <b>${cursor.om.toPrecision(3)}</b> rad/s &nbsp;·&nbsp; |G| = <b>${cursor.mag.toFixed(1)}</b> dB &nbsp;·&nbsp; ∠G = <b>${cursor.ph.toFixed(1)}</b>°`; };
+      cv.onmousemove=e=>{ const r=cv.getBoundingClientRect(); show(e.clientX-r.left); };
+      cv.onmouseleave=()=>{ renderBode(cv,sys,{showMargins:false}); if(rd) rd.innerHTML="Hover or drag across the plot to read ω, |G| and phase."; };
+      cv.ontouchmove=e=>{ const r=cv.getBoundingClientRect(); show(e.touches[0].clientX-r.left); e.preventDefault(); };
+    },
     steps:[
       {html:`Gain crossover: the magnitude crosses 0 dB at ω ≈ ${rwgc} rad/s.`,
        detail:`ω<sub>gc</sub> is where the magnitude curve (top panel) passes through the 0 dB line — here about ${rwgc} rad/s.`},
@@ -1716,7 +1726,7 @@ function gBode(){
        detail:`Positive PM and GM mean the curve stays clear of the −1 point — the closed loop is stable, with room to spare before it isn't.`}
     ]};
 }
-const GAME_GENS=[gMV,gDet,gCtrb,gEig,gFB,gBode];
+const GAME_GENS=[gDet,gCtrb,gEig,gFB,gBode];  // gMV (plain matrix×vector) retired — it's covered inside the others
 
 const GKEY="csp-game";
 let game={score:0,streak:0,best:0};
@@ -1793,7 +1803,7 @@ function finish(p, revealed){
   ctrl.querySelector('[data-a=next]').onclick=()=>newRound();
   renderScore();
 }
-renderScore(); newRound();
+/* (game first round is started from the final init block, after all helpers below are defined) */
 
 /* ================= visuals: root locus & bode ================= */
 const C=(re,im=0)=>({re,im});
@@ -2045,6 +2055,7 @@ document.getElementById("theme").addEventListener("click",()=>{
 
 /* init */
 renderHub();
+renderScore(); newRound();
 showView("hub");
 </script>
 </body>
