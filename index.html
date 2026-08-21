@@ -286,6 +286,8 @@
   .gplot{width:100%;height:300px;display:block;background:var(--paper);border:1px solid var(--line);
     border-radius:10px;margin-top:.7rem;touch-action:none;cursor:crosshair;}
   .greadout{min-height:1.2em;margin-top:.4rem;}
+  .gtopics{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-top:.9rem;}
+  .gtlabel{font-family:var(--sans);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-faint);font-weight:600;}
 
   /* ---- visuals (root locus / bode) ---- */
   .viz{background:var(--panel);border:1px solid var(--line);border-radius:14px;
@@ -354,6 +356,7 @@
       <div class="stat"><span class="n" id="gStreak">0</span><span class="l">🔥 Streak</span></div>
       <div class="stat"><span class="n" id="gBest">0</span><span class="l">Best streak</span></div>
     </div>
+    <div class="gtopics"><span class="gtlabel">Include topics</span><span id="gtopicPills" class="pills" style="margin:0"></span></div>
     <div id="game-body"></div>
   </div>
 
@@ -1726,7 +1729,26 @@ function gBode(){
        detail:`Positive PM and GM mean the curve stays clear of the −1 point — the closed loop is stable, with room to spare before it isn't.`}
     ]};
 }
-const GAME_GENS=[gDet,gCtrb,gEig,gFB,gBode];  // gMV (plain matrix×vector) retired — it's covered inside the others
+const GAME_TOPICS=[   // gMV (plain matrix×vector) retired — it's covered inside the others
+ {key:"det", label:"Determinant",    gen:gDet},
+ {key:"ctrb",label:"Controllability",gen:gCtrb},
+ {key:"eig", label:"Eigenvalues",    gen:gEig},
+ {key:"fb",  label:"State feedback", gen:gFB},
+ {key:"bode",label:"Bode margins",   gen:gBode}
+];
+let gameEnabled={};
+try{ gameEnabled=JSON.parse(localStorage.getItem("csp-game-topics"))||{}; }catch(e){}
+GAME_TOPICS.forEach(t=>{ if(!(t.key in gameEnabled)) gameEnabled[t.key]=true; });
+function saveTopics(){ localStorage.setItem("csp-game-topics",JSON.stringify(gameEnabled)); }
+function renderGameTopics(){
+  const el=document.getElementById("gtopicPills"); if(!el) return; el.innerHTML="";
+  GAME_TOPICS.forEach(t=>{ const b=document.createElement("button");
+    b.className="pill"+(gameEnabled[t.key]?" on":"");
+    b.textContent=(gameEnabled[t.key]?"✓ ":"")+t.label;
+    b.onclick=()=>{ gameEnabled[t.key]=!gameEnabled[t.key]; saveTopics(); renderGameTopics();
+      if(!cur && GAME_TOPICS.some(x=>gameEnabled[x.key])) newRound(); };
+    el.appendChild(b); });
+}
 
 const GKEY="csp-game";
 let game={score:0,streak:0,best:0};
@@ -1741,7 +1763,9 @@ const gameBody=document.getElementById("game-body");
 let cur=null, answered=false;
 
 function newRound(){
-  const g=pick(GAME_GENS)();
+  const pool=GAME_TOPICS.filter(t=>gameEnabled[t.key]);
+  if(!pool.length){ gameBody.innerHTML=`<div class="card"><p class="rule" style="margin:0">Turn on at least one topic above to start a round.</p></div>`; cur=null; return; }
+  const g=pick(pool).gen();
   const corrupt=g.steps.map((s,i)=>s.bad?i:-1).filter(i=>i>=0);
   const bug=(Math.random()<0.55 && corrupt.length) ? pick(corrupt) : -1;
   cur={g,bug}; answered=false;
@@ -2055,7 +2079,7 @@ document.getElementById("theme").addEventListener("click",()=>{
 
 /* init */
 renderHub();
-renderScore(); newRound();
+renderGameTopics(); renderScore(); newRound();
 showView("hub");
 </script>
 </body>
