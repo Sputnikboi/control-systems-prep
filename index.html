@@ -462,7 +462,7 @@ const ssDia = svg(470,150,
 );
 
 /* ================= crash-course names ================= */
-const COURSE_NAME={matmul:"Matrix multiplication",detrank:"Determinant & rank",eig:"Eigenvalues",feedback:"State feedback"};
+const COURSE_NAME={matmul:"Matrix multiplication",detrank:"Determinant & rank",eig:"Eigenvalues",feedback:"State feedback",obs:"Observer design",tfss:"TF ↔ state space",zeros:"Zeros",sse:"Steady-state error"};
 
 /* ================= LESSONS ================= */
 const LESSONS=[
@@ -480,7 +480,7 @@ const LESSONS=[
       <li>Transfer function: (s² − 2s + 3)Z = U ⇒ Z/U = 1/(s²−2s+3). Output ż ⇒ Y = sZ.</li></ol>
       <div class="answer"><b>H(s) = s / (s² − 2s + 3).</b> &nbsp;(Note the +3 constant makes the poles s = 1 ± j√2 — an <i>unstable</i> pair, Re = +1.)</div>`,
   },
-  { topic:"Transfer function → state space",
+  { topic:"Transfer function → state space", brush:["tfss"],
     prompt:`${TF("H(s) = 1 / [ (s + 2)(s + 3) ]")}<p>Transform the system into state-space form.</p>`,
     hints:[
       `Multiply out the denominator: (s+2)(s+3) = s² + 5s + 6. The numerator is 1.`,
@@ -596,7 +596,7 @@ const LESSONS=[
       ${ssDia}
       <div class="answer">Key idea: the <b>integrator</b> is the memory element; <b>A</b> is the internal feedback, <b>B</b> the input map, <b>C</b> the output map, <b>D</b> the direct feedthrough.</div>`,
   },
-  { topic:"Steady-state error to a ramp",
+  { topic:"Steady-state error to a ramp", brush:["sse"],
     prompt:`<p>For the closed-loop system</p>${TF("T(s) = y(s)/r(s) = s / (s + 2)")}<p>what is the steady-state error to a <b>ramp</b> input?</p>`,
     hints:[
       `Error e = r − y, so E(s) = (1 − T(s))R(s). Compute 1 − T.`,
@@ -944,7 +944,7 @@ const LESSONS=[
       <li><b>Stack them.</b> 𝒪 puts the row C on top of the row CA → 2 rows, 2 columns = 2×2: 𝒪 = ${mat([["0","1"],["1","−2"]],true)}. det 𝒪 = (0)(−2) − (1)(1) = <mark>−1</mark> ≠ 0 ⇒ full rank.</li></ol>
       <div class="answer"><b>Observable</b> — det 𝒪 = −1 ≠ 0. (Same A, B as Q1, yet observability holds — the two properties are independent.)</div>`,
   },
-  { topic:"Observer gain", brush:["eig"],
+  { topic:"Observer gain", brush:["obs","eig"],
     prompt:`${TF("ẋ = −x + u, &nbsp; y = x")}<p>Design an observer gain <span class="var">L</span> so the observer has an eigenvalue at −5.</p>`,
     hints:[
       `Observer error: ė = (A − LC)e. Its eigenvalues are the observer poles.`,
@@ -1053,7 +1053,7 @@ const LESSONS=[
       <li>CA = [1 0] ⇒ 𝒪 = ${mat([["1","0"],["1","0"]],true)}, det = 0 ⇒ <b>not observable</b>.</li></ol>
       <div class="answer"><b>Controllable, but not observable</b> (the output can't distinguish the second state).</div>`,
   },
-  { topic:"Compute the zeros",
+  { topic:"Compute the zeros", brush:["zeros"],
     prompt:`<p>Compute the zeros of</p>${ss(mat([["0","1"],["−2","−3"]]),mat([["0"],["1"]]),mat([["0","1"]]))}`,
     hints:[
       `Zeros are the roots of the numerator of H(s) = C(sI − A)⁻¹B.`,
@@ -1262,7 +1262,57 @@ const COURSES={
     <p>So the <b>sum</b> of the poles is 2σ (twice the real part) and the <b>product</b> is σ²+ω² — both real. Feed those into the same recipe; nothing else changes, and <b>F still comes out real</b>.</p>
     <p><b>Example:</b> place the poles at −2 ± 2j on A = ${mat([["0","1"],["−2","−3"]])} (α = −2, β = −3). Here σ = −2, ω = 2 ⇒ sum = 2σ = −4, product = σ²+ω² = 4+4 = 8. Then f₂ = (−4) − (−3) = <b>−1</b>, f₁ = −(8) − (−2) = <b>−6</b> ⇒ <mark>F = [−6  −1]</mark>.</p>
     <p class="rule">If a question gives damping ζ and natural frequency ωₙ instead of σ ± ωj, the desired polynomial is s² + 2ζωₙ·s + ωₙ² — same idea, already real. And to go the other way (quadratic → roots), the quadratic formula with a negative discriminant gives √(negative) = j·√(positive).</p>`,
-  gen:genFeedback }
+  gen:genFeedback },
+ obs:{
+  name:"Observer design (A−LC)", tag:"The dual of state feedback",
+  concept:`
+    <h3>What an observer does</h3>
+    <p>When you can't measure the whole state, an observer estimates it: x̂̇ = Ax̂ + Bu + L(y − Cx̂). The estimation error e = x − x̂ obeys <b>ė = (A − LC)e</b>, so you pick the column L to place the eigenvalues of A − LC (usually 2–5× faster than the controller).</p>
+    <div class="key">Observer poles = eigenvalues of (A − LC). It is the exact <b>dual</b> of state feedback (A + BF).</div>
+    <h3>The easy case: C = [1 0]</h3>
+    <p>For A = ${mat([["m","1"],["n","0"]],true)}, C = ${mat([["1","0"]])}, L = ${mat([["l₁"],["l₂"]],true)}:</p>
+    <div class="key">A − LC = ${mat([["m−l₁","1"],["n−l₂","0"]],true)} ⟶ char. poly &nbsp; s² − (m−l₁)s + (l₂−n)</div>
+    <p>Match to your target polynomial: <b>l₁ = m − (p₁+p₂)</b>, &nbsp; <b>l₂ = (p₁·p₂) + n</b>. Complex targets use sum = 2σ, product = σ²+ω² (both real), exactly like feedback.</p>
+    <h3>Worked example</h3>
+    <p>A = ${mat([["0","1"],["0","0"]])}, C = ${mat([["1","0"]])}, observer poles −4 and −5 ⇒ sum = −9, product = 20. l₁ = 0 − (−9) = <b>9</b>, l₂ = 20 + 0 = <b>20</b> ⇒ L = ${mat([["9"],["20"]])}.</p>`,
+  gen:genObs },
+ tfss:{
+  name:"Transfer function ↔ state space", tag:"Converting between the two forms",
+  concept:`
+    <h3>Both directions</h3>
+    <p><b>State space → transfer function:</b> &nbsp; H(s) = C(sI − A)⁻¹B (+ D).</p>
+    <p><b>Transfer function → state space:</b> &nbsp; read the coefficients into <i>controllable canonical form</i>.</p>
+    <div class="key">For H(s) = (b₁s + b₀) / (s² + a₁s + a₀): &nbsp; A = ${mat([["0","1"],["−a₀","−a₁"]],true)}, &nbsp; B = ${mat([["0"],["1"]])}, &nbsp; C = ${mat([["b₀","b₁"]],true)}</div>
+    <p>Bottom row of A = the denominator coefficients <b>negated</b>, low-order first. C = the numerator coefficients, low-order first.</p>
+    <h3>Worked example</h3>
+    <p>H(s) = 1/(s²+5s+6) ⇒ a₁=5, a₀=6, b₀=1, b₁=0 ⇒ A = ${mat([["0","1"],["−6","−5"]])}, B = ${mat([["0"],["1"]])}, C = ${mat([["1","0"]])}. Check C(sI−A)⁻¹B = 1/(s²+5s+6) ✓.</p>
+    <h3>From an ODE</h3>
+    <p>Given ÿ + a₁ẏ + a₀y = u, choose x₁ = y, x₂ = ẏ — you land on the same A, B, C.</p>`,
+  gen:genTFSS },
+ zeros:{
+  name:"Zeros of a system", tag:"Where the transfer-function numerator vanishes",
+  concept:`
+    <h3>What a zero is</h3>
+    <p>A <b>zero</b> is a value of s that makes the transfer function's <i>numerator</i> zero. For a state-space model H(s) = C(sI − A)⁻¹B = N(s)/det(sI − A); the zeros are the roots of N(s) (the poles are the roots of the denominator).</p>
+    <div class="key">N(s) = C · adj(sI − A) · B &nbsp; (degree &lt; n). Its roots are the zeros.</div>
+    <h3>2×2 recipe</h3>
+    <p>Form (sI − A); its adjugate swaps the diagonal entries and negates the off-diagonal ones; sandwich C · adj · B; set the resulting polynomial to 0.</p>
+    <h3>Worked example</h3>
+    <p>A = ${mat([["0","1"],["−2","−3"]])}, B = ${mat([["0"],["1"]])}, C = ${mat([["0","1"]])} ⇒ H(s) = s/((s+1)(s+2)) ⇒ numerator s ⇒ <b>one zero at s = 0</b>.</p>`,
+  gen:genZero },
+ sse:{
+  name:"Steady-state error", tag:"Final value theorem & system type",
+  concept:`
+    <h3>The final value theorem</h3>
+    <p>Steady-state error is e<sub>ss</sub> = lim<sub>s→0</sub> s·E(s). With unity feedback and loop gain L(s), the error is E(s) = R(s)/(1 + L(s)).</p>
+    <h3>System type = integrators in L(s)</h3>
+    <p>Count the factors of s in the denominator of L(s) — that's the type N.</p>
+    <div class="key">Step input: &nbsp; type 0 → 1/(1+K_p) (finite) · type ≥ 1 → 0<br>
+      Ramp input: &nbsp; type 0 → ∞ · type 1 → 1/K_v (finite) · type ≥ 2 → 0</div>
+    <p>with K_p = lim<sub>s→0</sub> L(s) and K_v = lim<sub>s→0</sub> s·L(s).</p>
+    <h3>Rule of thumb</h3>
+    <p>Each integrator lets the loop perfectly track one "harder" input: type 1 tracks a step with zero error; type 2 tracks a ramp with zero error.</p>`,
+  gen:genSSE }
 };
 
 function genMatMul(){
@@ -1395,6 +1445,78 @@ function genFeedback(){
       <li>Match: f₂ = (sum) − β = ${fmt(sum)} − (${fmt(be)}) = <b>${fmt(f2)}</b>; &nbsp; f₁ = −(product) − α = −(${fmt(prod)}) − (${fmt(al)}) = <b>${fmt(f1)}</b>.</li>
       <li>⇒ F = [ ${fmt(f1)} &nbsp; ${fmt(f2)} ] &nbsp;(real, even though the poles are complex).</li></ol>`,
     check:root=>compareCells(root,[f1,f2])
+  };
+}
+function genObs(){
+  const m=randInt(-3,3), n=randInt(-3,3);
+  let sum,prod,poleText,note;
+  if(Math.random()<0.5){ const sig=randInt(-4,-1), om=randInt(1,3); sum=2*sig; prod=sig*sig+om*om;
+    poleText=`${fmt(sig)} ± ${om}j`; note=`conjugate pair σ ± ωj: sum = 2σ = ${fmt(sum)}, product = σ²+ω² = ${fmt(prod)}`; }
+  else { const p1=randInt(-5,-1), p2=randInt(-5,-1); sum=p1+p2; prod=p1*p2;
+    poleText=`${fmt(p1)} and ${fmt(p2)}`; note=`sum = ${fmt(sum)}, product = ${fmt(prod)}`; }
+  const l1=m-sum, l2=prod+n;
+  return {
+    html:`<div class="eq"><div class="eqline">A = ${matNum([[m,1],[n,0]])} &nbsp; C = ${mat([["1","0"]])}</div>
+      <div class="eqline" style="margin-top:.4rem">place the observer poles at <b>${poleText}</b></div>
+      <div class="eqline" style="margin-top:.4rem">L = ${matIn(2,1)}</div></div>`,
+    steps:`<ol>
+      <li>The error e = x − x̂ obeys ė = (A − LC)e; place the eigenvalues of A − LC. Desired: s² + ${fmt(-sum)}s + ${fmt(prod)} (${note}).</li>
+      <li>With C = [1 0], A − LC = ${mat([["m−l₁","1"],["n−l₂","0"]],true)} ⇒ char. poly s² − (m − l₁)s + (l₂ − n).</li>
+      <li>Match: l₁ = m − (sum) = ${fmt(m)} − (${fmt(sum)}) = <b>${fmt(l1)}</b>; &nbsp; l₂ = (product) + n = ${fmt(prod)} + (${fmt(n)}) = <b>${fmt(l2)}</b>.</li>
+      <li>⇒ L = [ ${fmt(l1)} ; ${fmt(l2)} ].</li></ol>`,
+    check:root=>compareCells(root,[l1,l2])
+  };
+}
+function genTFSS(){
+  const a1=randInt(1,6), a0=randInt(1,9), b1=randInt(0,3), b0=randInt(1,6);
+  const numStr = b1===0? `${b0}` : `${b1===1?"":b1}s + ${b0}`;
+  return {
+    html:`<div class="eq"><div class="eqline tf">H(s) = (${numStr}) / (s² + ${a1}s + ${a0})</div></div>
+      <p class="dimq">Controllable canonical form (B = [0;1]) — fill A's bottom row and C:</p>
+      <div class="eq"><div class="eqline">A = <span class="mat matinput" style="grid-template-columns:repeat(2,auto)"><span>0</span><span>1</span><input class="cell-in" aria-label="A row2 col1"><input class="cell-in" aria-label="A row2 col2"></span>
+        &nbsp;&nbsp; C = <span class="mat matinput" style="grid-template-columns:repeat(2,auto)"><input class="cell-in" aria-label="C first"><input class="cell-in" aria-label="C second"></span></div></div>`,
+    steps:`<ol>
+      <li>Denominator s² + ${a1}s + ${a0} ⇒ a₁ = ${a1}, a₀ = ${a0}. Numerator ⇒ b₀ = ${b0}, b₁ = ${b1}.</li>
+      <li>Controllable canonical form: A = ${matNum([[0,1],[-a0,-a1]])} (bottom row = −a₀, −a₁), B = ${matNum([[0],[1]])}.</li>
+      <li>C = numerator coefficients low-order first = ${mat([[fmt(b0),fmt(b1)]])}.</li></ol>`,
+    check:root=>compareCells(root,[-a0,-a1,b0,b1])
+  };
+}
+function genZero(){
+  const a=randInt(-3,3), b=randInt(-3,3)||1, c=randInt(-3,3), d=randInt(-3,3), c0=randInt(-2,2);
+  const konst=c0*b-a, zero=a-c0*b;
+  return {
+    html:`<div class="eq"><div class="eqline">ẋ = ${matNum([[a,b],[c,d]])}x + ${matNum([[0],[1]])}u</div>
+      <div class="eqline">y = ${mat([[fmt(c0),"1"]])} x</div>
+      <div class="eqline" style="margin-top:.4rem">zero at s = <input class="num-in" aria-label="zero"></div></div>`,
+    steps:`<ol>
+      <li>Zeros = roots of the numerator of H(s) = C(sI − A)⁻¹B.</li>
+      <li>C·adj(sI − A)·B works out to N(s) = s + (${fmt(konst)}).</li>
+      <li>Set N(s) = 0 ⇒ s = −(${fmt(konst)}) = <b>${fmt(zero)}</b>.</li></ol>`,
+    check:root=>{ const el=root.querySelector(".num-in"); const ok=parseNum(el.value)===zero;
+      el.classList.toggle("good-in",ok); el.classList.toggle("bad-in",!ok); return ok; }
+  };
+}
+function genSSE(){
+  const N=randInt(0,2), a=randInt(1,5), b=randInt(1,5), K=randInt(1,9), input=pick(["step","ramp"]);
+  const sfac=N===0?"":(N===1?"s ":"s² ");
+  const den=`${sfac}(s+${a})(s+${b})`;
+  const cat = input==="step" ? (N===0?"finite":"zero") : (N===0?"inf":(N===1?"finite":"zero"));
+  return {
+    html:`<div class="eq"><div class="eqline tf">L(s) = ${K} / ( ${den} )</div>
+      <div class="eqline" style="margin-top:.3rem">unity feedback · input: <b>${input==="step"?"unit step":"unit ramp"}</b></div></div>
+      <p class="dimq">Steady-state error e<sub>ss</sub> is
+        <span class="rankgrp"><button class="rank-btn sse" data-v="zero">0</button>
+        <button class="rank-btn sse" data-v="finite">finite</button>
+        <button class="rank-btn sse" data-v="inf">∞</button></span></p>`,
+    wire:root=>{ root.querySelectorAll(".sse").forEach(bn=>bn.addEventListener("click",()=>{
+      root.querySelectorAll(".sse").forEach(x=>x.classList.remove("sel","good-in","bad-in")); bn.classList.add("sel"); })); },
+    steps:`<ol>
+      <li>System type = number of integrators (factors of s) in L(s) = <b>${N}</b>.</li>
+      <li>${input==="step" ? "Step: type 0 ⇒ finite = 1/(1+K_p); type ≥ 1 ⇒ 0." : "Ramp: type 0 ⇒ ∞; type 1 ⇒ finite = 1/K_v; type ≥ 2 ⇒ 0."}</li>
+      <li>Type ${N} ⇒ e_ss = <b>${cat==="zero"?"0":cat==="finite"?"a finite value":"∞"}</b>${cat==="finite"?` (${input==="step"?`K_p = ${K}/${a*b}`:`K_v = ${K}/${a*b}`})`:""}.</li></ol>`,
+    check:root=>{ const sel=root.querySelector(".sse.sel"); const ok=!!sel&&sel.dataset.v===cat;
+      root.querySelectorAll(".sse").forEach(x=>x.classList.remove("good-in","bad-in")); if(sel)sel.classList.add(ok?"good-in":"bad-in"); return ok; }
   };
 }
 
@@ -1729,11 +1851,86 @@ function gBode(){
        detail:`Positive PM and GM mean the curve stays clear of the −1 point — the closed loop is stable, with room to spare before it isn't.`}
     ]};
 }
+function gObs(){
+  const m=randInt(-3,3), n=randInt(-3,3), p1=randInt(-5,-1), p2=randInt(-5,-1);
+  const sum=p1+p2, prod=p1*p2, l1=m-sum, l2=prod+n;
+  return { topic:"Observer design (A−LC)",
+    problem:`Place the observer poles at ${fmt(p1)} and ${fmt(p2)} for A = ${matNum([[m,1],[n,0]])}, C = ${mat([["1","0"]])}. Someone found L = [l₁; l₂].`,
+    steps:[
+      {html:`Target polynomial: s² + ${fmt(-sum)}s + ${fmt(prod)} (sum = ${fmt(sum)}, product = ${fmt(prod)}).`,
+       detail:`(s−(${fmt(p1)}))(s−(${fmt(p2)})) = s² − (p₁+p₂)s + p₁p₂ = s² + ${fmt(-sum)}s + ${fmt(prod)}.`},
+      {html:`With C = [1 0], A − LC = ${mat([[fmt(m)+"−l₁","1"],[fmt(n)+"−l₂","0"]],true)} ⇒ char. poly s² − (${fmt(m)}−l₁)s + (l₂−${fmt(n)}).`,
+       detail:`LC only touches the first column. A matrix [[x,1],[y,0]] has char. poly s² − x·s − y, so x = ${fmt(m)}−l₁ and the constant is l₂−${fmt(n)}.`},
+      {html:`l₁ = m − (sum) = ${fmt(m)} − (${fmt(sum)}) = ${fmt(l1)}.`,
+       bad:`l₁ = m + (sum) = ${fmt(m)} + (${fmt(sum)}) = ${fmt(m+sum)}.`, fix:`l₁ = m − sum = ${fmt(l1)}`,
+       detail:`Match the s term: ${fmt(m)} − l₁ = ${fmt(sum)} ⇒ l₁ = ${fmt(m)} − (${fmt(sum)}) = <b>${fmt(l1)}</b>.`},
+      {html:`l₂ = (product) + n = ${fmt(prod)} + (${fmt(n)}) = ${fmt(l2)}.`,
+       bad:`l₂ = (product) − n = ${fmt(prod)} − (${fmt(n)}) = ${fmt(prod-n)}.`, fix:`l₂ = product + n = ${fmt(l2)}`,
+       detail:`Match the constant: l₂ − ${fmt(n)} = ${fmt(prod)} ⇒ l₂ = ${fmt(prod)} + (${fmt(n)}) = <b>${fmt(l2)}</b>.`},
+      {html:`So L = [ ${fmt(l1)} ; ${fmt(l2)} ].`,
+       detail:`Check: A − LC = ${matNum([[m-l1,1],[n-l2,0]])} ⇒ char. poly s² + ${fmt(-sum)}s + ${fmt(prod)} ⇒ poles ${fmt(p1)}, ${fmt(p2)} ✓.`}
+    ]};
+}
+function gTFSS(){
+  let a1,a0,b0,b1; do{ a1=randInt(1,6); a0=randInt(1,9); b0=randInt(1,6); b1=randInt(0,3); }while(b0===b1);
+  const numStr = b1===0? `${b0}` : `${b1===1?"":b1}s + ${b0}`;
+  return { topic:"Transfer function → state space",
+    problem:`Someone converted H(s) = (${numStr}) / (s² + ${a1}s + ${a0}) into controllable canonical form (B = [0;1]).`,
+    steps:[
+      {html:`Denominator ⇒ a₁ = ${a1}, a₀ = ${a0}; numerator ⇒ b₀ = ${b0}, b₁ = ${b1}.`,
+       detail:`Read the coefficients straight off the two polynomials.`},
+      {html:`A = ${matNum([[0,1],[-a0,-a1]])} — bottom row is −a₀, −a₁.`,
+       bad:`A = ${matNum([[0,1],[a0,a1]])} — bottom row is a₀, a₁.`,
+       fix:`the bottom row is −a₀, −a₁ = ${fmt(-a0)}, ${fmt(-a1)}`,
+       detail:`Controllable canonical form uses the <b>negated</b> denominator coefficients in the bottom row: [−a₀  −a₁] = [${fmt(-a0)}  ${fmt(-a1)}].`},
+      {html:`C = ${mat([[fmt(b0),fmt(b1)]])} — numerator coefficients, low-order first.`,
+       bad:`C = ${mat([[fmt(b1),fmt(b0)]])} — numerator coefficients.`,
+       fix:`C = [b₀  b₁] = [${fmt(b0)}  ${fmt(b1)}], low-order coefficient first`,
+       detail:`C lists numerator coefficients low-order first: [b₀  b₁] = [${fmt(b0)}  ${fmt(b1)}].`}
+    ]};
+}
+function gZero(){
+  let a,b,c,d,c0,konst; do{ a=randInt(-3,3); b=randInt(-3,3)||1; c=randInt(-3,3); d=randInt(-3,3); c0=randInt(-2,2); konst=c0*b-a; }while(konst===0);
+  const zero=a-c0*b;
+  return { topic:"Zeros of a system",
+    problem:`Someone found the zeros of ẋ = ${matNum([[a,b],[c,d]])}x + ${matNum([[0],[1]])}u, y = ${mat([[fmt(c0),"1"]])}x.`,
+    steps:[
+      {html:`Zeros are the roots of the numerator of H(s) = C(sI − A)⁻¹B.`,
+       detail:`Poles come from det(sI−A); zeros from the numerator N(s) = C·adj(sI−A)·B.`},
+      {html:`Numerator: N(s) = s + (${fmt(konst)}).`,
+       detail:`Carrying out C·adj(sI−A)·B for this B and C gives N(s) = s + (${fmt(konst)}).`},
+      {html:`Set N(s) = 0 ⇒ s = −(${fmt(konst)}) = ${fmt(zero)}.`,
+       bad:`Set N(s) = 0 ⇒ s = ${fmt(konst)}.`, fix:`s = −(${fmt(konst)}) = ${fmt(zero)}`,
+       detail:`s + (${fmt(konst)}) = 0 ⇒ s = −(${fmt(konst)}) = <b>${fmt(zero)}</b>. The easy slip is forgetting to negate.`}
+    ]};
+}
+function gSSE(){
+  const N=randInt(0,2), a=randInt(1,5), b=randInt(1,5), K=randInt(1,9), input=pick(["step","ramp"]);
+  const sfac=N===0?"":(N===1?"s ":"s² "); const den=`${sfac}(s+${a})(s+${b})`;
+  const cat = input==="step" ? (N===0?"finite":"zero") : (N===0?"inf":(N===1?"finite":"zero"));
+  const lab=c=>c==="zero"?"0":c==="finite"?"a finite non-zero value":"∞";
+  const wrong=pick(["zero","finite","inf"].filter(x=>x!==cat));
+  return { topic:"Steady-state error",
+    problem:`Unity feedback, L(s) = ${K} / ( ${den} ), input = ${input==="step"?"unit step":"unit ramp"}. Someone found the steady-state error.`,
+    steps:[
+      {html:`System type = number of integrators (factors of s) in L(s) = ${N}.`,
+       detail:`Count pure s factors in the denominator — here ${N}.`},
+      {html:`${input==="step"?"Step: type 0 ⇒ finite (1/(1+K_p)); type ≥ 1 ⇒ 0.":"Ramp: type 0 ⇒ ∞; type 1 ⇒ finite (1/K_v); type ≥ 2 ⇒ 0."}`,
+       detail:`Each integrator removes one more level of steady-state error.`},
+      {html:`Type ${N} with a ${input} ⇒ e_ss = ${lab(cat)}.`,
+       bad:`Type ${N} with a ${input} ⇒ e_ss = ${lab(wrong)}.`, fix:`type ${N} + ${input} ⇒ e_ss = ${lab(cat)}`,
+       detail:`With type ${N} and a ${input} input, e_ss = <b>${lab(cat)}</b>.`}
+    ]};
+}
 const GAME_TOPICS=[   // gMV (plain matrix×vector) retired — it's covered inside the others
  {key:"det", label:"Determinant",    gen:gDet},
  {key:"ctrb",label:"Controllability",gen:gCtrb},
  {key:"eig", label:"Eigenvalues",    gen:gEig},
  {key:"fb",  label:"State feedback", gen:gFB},
+ {key:"obs", label:"Observer design",gen:gObs},
+ {key:"tfss",label:"TF→state space", gen:gTFSS},
+ {key:"zeros",label:"Zeros",         gen:gZero},
+ {key:"sse", label:"Steady-state err",gen:gSSE},
  {key:"bode",label:"Bode margins",   gen:gBode}
 ];
 let gameEnabled={};
